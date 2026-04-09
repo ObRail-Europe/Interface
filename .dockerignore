@@ -1,0 +1,28 @@
+.git
+.gitignore
+__pycache__
+**/__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info
+.venv
+venv
+env/
+
+# Secrets — passés via env_file à l'exécution, jamais dans l'image
+venv/
+.env
+
+# Données et logs — montés via volumes, inutile dans le contexte de build
+.git
+.DS_Store
+data/
+logs/
+
+# Divers
+Documentations/
+analyse/
+.DS_Store
+**/.DS_Store

@@ -1,0 +1,14 @@
+.env
+.venv/
+venv/
+
+data/
+logs/
+artifacts/
+
+pycache/
+__pycache__/
+
+.vscode/
+
+analyse/processed/
