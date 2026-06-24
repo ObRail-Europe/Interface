@@ -1,44 +1,24 @@
+"""Accès base de données : moteur SQLAlchemy et dépendance de session FastAPI.
+
+`create_engine` est paresseux (aucune connexion n'est ouverte à l'import), ce qui
+permet d'importer ce module sans Postgres démarré.
 """
-Connection pool PostgreSQL pour l'API.
 
-Utilise psycopg2.pool.ThreadedConnectionPool, initialisé au démarrage
-de l'application via le lifespan FastAPI.
-"""
+from collections.abc import Generator
 
-from psycopg2.pool import ThreadedConnectionPool
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session, sessionmaker
 
-from .config import ApiConfig
+from config import settings
 
-pool: ThreadedConnectionPool | None = None
-
-
-def init_pool() -> None:
-    """Crée le pool de connexions PostgreSQL."""
-    global pool
-    cfg = ApiConfig
-    pool = ThreadedConnectionPool(
-        minconn=cfg.DB_POOL_MIN,
-        maxconn=cfg.DB_POOL_MAX,
-        host=cfg.PG_HOST,
-        port=int(cfg.PG_PORT),
-        dbname=cfg.PG_DB,
-        user=cfg.PG_USER,
-        password=cfg.PG_PASSWORD,
-    )
+engine = create_engine(settings.database_url, pool_pre_ping=True, future=True)
+SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, future=True)
 
 
-def close_pool() -> None:
-    """Ferme toutes les connexions du pool."""
-    global pool
-    if pool:
-        pool.closeall()
-        pool = None
-
-
-def get_db():
-    """FastAPI dependency — yield une connexion psycopg2, rendue au pool après usage."""
-    conn = pool.getconn()
+def get_db() -> Generator[Session]:
+    """Fournit une session SQLAlchemy par requête et la ferme."""
+    db = SessionLocal()
     try:
-        yield conn
+        yield db
     finally:
-        pool.putconn(conn)
+        db.close()
