@@ -12,3 +12,5 @@ __pycache__/
 .vscode/
 
 analyse/processed/
+
+*_cache/
