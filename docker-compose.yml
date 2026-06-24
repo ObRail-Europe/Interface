@@ -1,0 +1,46 @@
+# Orchestration du socle ObRail : base de données + API + dashboard.
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-obrail}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-obrail}
+      POSTGRES_DB: ${POSTGRES_DB:-obrail}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data # persistance des données
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-obrail} -d ${POSTGRES_DB:-obrail}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: ./api
+    environment:
+      # Connexion à Postgres via le réseau interne docker-compose (service `db`)
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-obrail}:${POSTGRES_PASSWORD:-obrail}@db:5432/${POSTGRES_DB:-obrail}
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').status==200 else 1)\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  dashboard:
+    build: ./dashboard
+    environment:
+      API_URL: http://api:8000
+    ports:
+      - "8050:8050"
+    depends_on:
+      - api
+
+volumes:
+  pgdata:
