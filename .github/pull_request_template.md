@@ -4,11 +4,11 @@
 
 ## Type de changement
 
-- [ ] `feat` — nouvelle fonctionnalité
-- [ ] `fix` — correction de bug
-- [ ] `ci` / `build` — pipeline, conteneurisation, outillage
-- [ ] `docs` — documentation
-- [ ] `refactor` / `test` — refactoring ou tests
+- [ ] `feat` - nouvelle fonctionnalité
+- [ ] `fix` - correction de bug
+- [ ] `ci` / `build` - pipeline, conteneurisation, outillage
+- [ ] `docs` - documentation
+- [ ] `refactor` / `test` - refactoring ou tests
 
 ## Checklist
 

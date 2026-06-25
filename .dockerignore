@@ -11,11 +11,11 @@ __pycache__
 venv
 env/
 
-# Secrets — passés via env_file à l'exécution, jamais dans l'image
+# Secrets - passés via env_file à l'exécution, jamais dans l'image
 venv/
 .env
 
-# Données et logs — montés via volumes, inutile dans le contexte de build
+# Données et logs - montés via volumes, inutile dans le contexte de build
 .git
 .DS_Store
 data/
