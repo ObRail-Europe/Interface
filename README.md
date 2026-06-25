@@ -4,7 +4,8 @@ Solution applicative conteneurisée pour **ObRail Europe**, observatoire du ferr
 bas-carbone. Elle expose les données de **trajets** ferroviaires, de **villes** et un modèle de **clustering de
 fragilité**, via une API REST et un dashboard. Ce dépôt correspond à la phase d'**industrialisation** du prototype.
 
-> **État actuel : socle MVP** ; API et dashboard fonctionnent et sont conteneurisés
+> **État actuel** : socle MVP conteneurisé (API + dashboard) et **schéma de données** PostgreSQL (3 tables).
+> Endpoints métier et ingestion ETL des données à venir.
 
 ## Architecture
 
@@ -39,12 +40,39 @@ Chaque service est un projet Python 3.13 géré par [`uv`](https://docs.astral.s
 ```bash
 cd api          # ou: cd dashboard
 uv sync               # installe les dépendances (crée .venv + uv.lock)
-uv run pytest         # tests
+uv run pytest         # tests (intégration : PostgreSQL requis, cf. § Base de données)
 uv run ruff check     # lint
 uv run ruff format    # formatage
 uv run uvicorn main:app --reload      # API en local (port 8000)
 # uv run python main.py                # Dashboard en local (port 8050)
 ```
+
+## Base de données (schéma)
+
+Trois tables PostgreSQL, alimentées par les fichiers de `data/` (modèles SQLAlchemy 2.0 dans `api/models/`) :
+
+| Table | Source (`data/`) | Clé primaire | Contenu |
+| --- | --- | --- | --- |
+| `villes` | `villes_enriched.csv` (~10k) | `citycode` (INSEE) | desserte + indicateurs socio-éco par commune |
+| `clusters` | `clusters_final.csv` (~10k) | `row_id` | cluster de fragilité + features (modèle `cluster_fragilite.joblib`) |
+| `trajets` | `routes_france.csv` (~13M) | `id` (surrogate) | trajets ferroviaires : horaires, géo, calendrier, CO₂ |
+
+Créer (ou mettre à jour) le schéma dans une base lancée :
+
+```bash
+docker compose up -d db              # PostgreSQL seul
+cd api && uv run python init_db.py   # crée les tables (idempotent)
+```
+
+Choix de modélisation :
+
+- **`trajets`** : clé technique `id` (BigInteger), car `trip_id` n'est pas garanti unique sur ~13M lignes.
+- **`clusters` ↔ `villes`** : rattachement par `city_name` (ce jeu de données ne fournit pas le code INSEE).
+- **Heures GTFS** (ex. `24:29:00`, valides en GTFS mais hors plage SQL `TIME`) conservées en **texte** ;
+  dates de service typées `Date`.
+
+> Les **tests d'intégration** (round-trip ORM) requièrent PostgreSQL : ils utilisent `TEST_DATABASE_URL`
+> (défaut : `DATABASE_URL`) et sont **ignorés** si la base est indisponible. Les tests de métadonnées tournent sans base.
 
 ## Structure
 
@@ -55,8 +83,10 @@ Interface/
 ├── api/                    # backend FastAPI
 │   ├── main.py             # app + GET /health
 │   ├── config.py           # settings (pydantic-settings)
-│   ├── database.py         # moteur/session SQLAlchemy
-│   └── tests/
+│   ├── database.py         # moteur/session SQLAlchemy + init_db()/drop_db()
+│   ├── init_db.py          # script : crée le schéma dans PostgreSQL
+│   ├── models/             # modèles ORM : Base, Ville, Cluster, Trajet
+│   └── tests/              # tests métadonnées + round-trip Postgres
 ├── dashboard/              # frontend Dash
 │   ├── main.py             # app Dash + server (gunicorn)
 │   └── tests/
@@ -79,5 +109,5 @@ Phase features (sessions ultérieures) :
 - **API** : `/trajets`, `/trajets/{id}`, `/stats/volumes`, `/stats/jour-nuit`, `/villes`, `/clusters`, `/fragilite`…
 - **Dashboard** : pages Vue d'ensemble, Trajets, Jour/Nuit, Opérateurs, Carbone/CO₂, Villes & couverture,
   Fragilité/Clusters.
-- **ETL** : ingestion des CSV (`data/`) dans PostgreSQL (`villes`, `clusters`, `trajets`).
+- **ETL** : ingestion des CSV (`data/`) dans les tables — le **schéma ORM est en place**, reste le chargement des données.
 - **Monitoring** : Prometheus + Grafana. **Tests E2E** : Playwright.
