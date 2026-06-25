@@ -45,6 +45,9 @@ class Trajet(Base):
     distance_km: Mapped[float | None]
     co2_per_pkm: Mapped[float | None]
     emissions_co2: Mapped[float | None]
+    # Rattachement (souple, sans FK) à `villes`, résolu par nom lors de l'ETL.
+    departure_citycode: Mapped[str | None] = mapped_column(String(10), index=True)
+    arrival_citycode: Mapped[str | None] = mapped_column(String(10), index=True)
 
     def __repr__(self) -> str:
         return f"<Trajet id={self.id} {self.departure_city!r}->{self.arrival_city!r}>"

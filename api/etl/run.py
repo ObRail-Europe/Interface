@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 
 from database import engine
 from etl.loaders import load_clusters, load_trajets, load_villes, truncate_all
+from etl.resolve import resolution_stats, resolve_clusters, resolve_trajets
 from models import Trajet
 
 # data/ à la racine du dépôt (ou /data dans le conteneur).
@@ -25,6 +26,7 @@ def main() -> None:
     parser.add_argument("--data-dir", type=Path, default=DEFAULT_DATA_DIR)
     parser.add_argument("--trajets-limit", type=int, default=None, help="nb max de trajets")
     parser.add_argument("--skip-trajets", action="store_true")
+    parser.add_argument("--skip-resolve", action="store_true", help="ne pas résoudre les jointures")
     parser.add_argument("--no-truncate", action="store_true")
     args = parser.parse_args()
 
@@ -46,6 +48,23 @@ def main() -> None:
         with Session(engine) as session:
             n_trajets = session.scalar(select(func.count()).select_from(Trajet))
         print(f"trajets  : {n_trajets} lignes")
+
+    if not args.skip_resolve:
+        with Session(engine) as session:
+            n_clusters = resolve_clusters(session)
+            if not args.skip_trajets:
+                resolve_trajets(session)
+            session.commit()
+            stats = resolution_stats(session)
+        print(f"résolu   : clusters.citycode {n_clusters}/{stats['clusters_total']}")
+        if not args.skip_trajets:
+            total = stats["trajets_total"] or 1
+            print(
+                f"           trajets départ {stats['depart_resolus']}/{total} "
+                f"({100 * stats['depart_resolus'] / total:.0f}%), "
+                f"arrivée {stats['arrivee_resolus']}/{total} "
+                f"({100 * stats['arrivee_resolus'] / total:.0f}%)"
+            )
 
 
 if __name__ == "__main__":
