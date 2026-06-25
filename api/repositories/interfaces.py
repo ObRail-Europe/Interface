@@ -22,7 +22,28 @@ class OverviewAggregates:
     emissions_co2_totales_g: float
 
 
+@dataclass(frozen=True)
+class JourNuitCounts:
+    """Décompte des trajets de jour et de nuit."""
+
+    nb_jour: int
+    nb_nuit: int
+
+
+@dataclass(frozen=True)
+class OperateurCount:
+    """Volume (et part de nuit) d'un opérateur."""
+
+    agency_name: str
+    nb_trajets: int
+    nb_nuit: int
+
+
 class StatsRepository(Protocol):
     """Accès aux statistiques agrégées des trajets."""
 
     def overview_aggregates(self) -> OverviewAggregates: ...
+
+    def jour_nuit_counts(self) -> JourNuitCounts: ...
+
+    def top_operateurs(self, limit: int) -> list[OperateurCount]: ...

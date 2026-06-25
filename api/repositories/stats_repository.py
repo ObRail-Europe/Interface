@@ -3,7 +3,7 @@
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from repositories.interfaces import OverviewAggregates
+from repositories.interfaces import JourNuitCounts, OperateurCount, OverviewAggregates
 
 # Agrégations calculées côté base (jamais de transfert de lignes brutes).
 _OVERVIEW_SQL = text("""
@@ -32,6 +32,24 @@ SELECT
 FROM trajets
 """)
 
+_JOUR_NUIT_SQL = text("""
+SELECT
+  count(*) FILTER (WHERE is_night_train IS NOT TRUE) AS nb_jour,
+  count(*) FILTER (WHERE is_night_train) AS nb_nuit
+FROM trajets
+""")
+
+_OPERATEURS_SQL = text("""
+SELECT agency_name,
+       count(*) AS nb_trajets,
+       count(*) FILTER (WHERE is_night_train) AS nb_nuit
+FROM trajets
+WHERE agency_name IS NOT NULL AND agency_name <> ''
+GROUP BY agency_name
+ORDER BY nb_trajets DESC
+LIMIT :limit
+""")
+
 
 class SqlAlchemyStatsRepository:
     """Accès aux statistiques via une session SQLAlchemy."""
@@ -52,3 +70,18 @@ class SqlAlchemyStatsRepository:
             co2_moyen_par_pkm=row["co2_moyen_par_pkm"],
             emissions_co2_totales_g=float(row["emissions_co2_totales_g"]),
         )
+
+    def jour_nuit_counts(self) -> JourNuitCounts:
+        row = self._session.execute(_JOUR_NUIT_SQL).mappings().one()
+        return JourNuitCounts(nb_jour=row["nb_jour"], nb_nuit=row["nb_nuit"])
+
+    def top_operateurs(self, limit: int) -> list[OperateurCount]:
+        rows = self._session.execute(_OPERATEURS_SQL, {"limit": limit}).mappings().all()
+        return [
+            OperateurCount(
+                agency_name=row["agency_name"],
+                nb_trajets=row["nb_trajets"],
+                nb_nuit=row["nb_nuit"],
+            )
+            for row in rows
+        ]

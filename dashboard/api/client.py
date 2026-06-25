@@ -14,6 +14,10 @@ class OverviewClient(Protocol):
 
     def get_overview(self) -> dict[str, Any]: ...
 
+    def get_jour_nuit(self) -> dict[str, Any]: ...
+
+    def get_operateurs(self, limit: int) -> list[dict[str, Any]]: ...
+
 
 class HttpOverviewClient:
     """Implémentation HTTP basée sur `requests`."""
@@ -29,3 +33,9 @@ class HttpOverviewClient:
 
     def get_overview(self) -> dict[str, Any]:
         return self._get("/api/v1/stats/overview")
+
+    def get_jour_nuit(self) -> dict[str, Any]:
+        return self._get("/api/v1/stats/jour-nuit")
+
+    def get_operateurs(self, limit: int = 5) -> list[dict[str, Any]]:
+        return self._get(f"/api/v1/stats/operateurs?limit={limit}")
