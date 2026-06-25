@@ -1,4 +1,8 @@
-# Orchestration du socle ObRail : base de données + API + dashboard.
+# Orchestration ObRail : base de données + migrations + API + dashboard.
+#   Lancement (schéma créé automatiquement) :  docker compose up --build
+#   Chargement des données (CSV de data/)    :  docker compose --profile load run --rm load
+
+x-db-url: &db-url postgresql+psycopg://${POSTGRES_USER:-obrail}:${POSTGRES_PASSWORD:-obrail}@db:5432/${POSTGRES_DB:-obrail}
 
 services:
   db:
@@ -17,16 +21,29 @@ services:
       timeout: 5s
       retries: 5
 
-  api:
+  # Applique les migrations Alembic puis se termine (le schéma est prêt avant l'API).
+  migrate:
+    image: obrail-api
     build: ./api
+    command: ["alembic", "upgrade", "head"]
     environment:
-      # Connexion à Postgres via le réseau interne docker-compose (service `db`)
-      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-obrail}:${POSTGRES_PASSWORD:-obrail}@db:5432/${POSTGRES_DB:-obrail}
+      DATABASE_URL: *db-url
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    image: obrail-api
+    environment:
+      DATABASE_URL: *db-url
     ports:
       - "8000:8000"
     depends_on:
       db:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').status==200 else 1)\""]
       interval: 10s
@@ -41,6 +58,21 @@ services:
       - "8050:8050"
     depends_on:
       - api
+
+  # Ingestion des CSV (data/ monté en lecture seule). Profil `load` : non lancé par défaut.
+  #   docker compose --profile load run --rm load
+  load:
+    image: obrail-api
+    profiles: ["load"]
+    command: ["python", "-m", "etl.run", "--data-dir", "/data"]
+    environment:
+      DATABASE_URL: *db-url
+    volumes:
+      - ./data:/data:ro
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: "no"
 
 volumes:
   pgdata:

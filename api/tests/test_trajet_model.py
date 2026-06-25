@@ -14,6 +14,7 @@ EXPECTED_COLUMNS = {
     "arrival_station", "arrival_city", "arrival_country", "arrival_time",
     "arrival_parent_station", "service_start_date", "service_end_date",
     "days_of_week", "is_night_train", "distance_km", "co2_per_pkm", "emissions_co2",
+    "departure_citycode", "arrival_citycode",
 }  # fmt: skip
 
 
@@ -43,6 +44,8 @@ def test_indexes_declared() -> None:
         "is_night_train",
         "service_start_date",
         "service_end_date",
+        "departure_citycode",
+        "arrival_citycode",
     }
     assert expected <= indexed
 

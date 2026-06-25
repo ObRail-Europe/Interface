@@ -9,7 +9,7 @@ EXPECTED_COLUMNS = {
     "niveau_fragilite", "has_gare", "accessibilite_ord", "dist_gare_min_m",
     "nb_trajets_total", "nb_lignes_total", "amplitude_moy_h", "revenu_median_uc",
     "voitures_par_menage", "taux_sans_voiture", "part_65plus",
-    "distance_dom_trav_med_km", "population", "densite_pop_km2",
+    "distance_dom_trav_med_km", "population", "densite_pop_km2", "citycode",
 }  # fmt: skip
 
 
@@ -28,7 +28,7 @@ def test_columns_match_source() -> None:
 
 def test_indexes_declared() -> None:
     indexed = {c.name for c in Cluster.__table__.columns if c.index}
-    assert {"city_name", "cluster", "niveau_fragilite"} <= indexed
+    assert {"city_name", "cluster", "niveau_fragilite", "citycode"} <= indexed
 
 
 def test_insert_roundtrip(session: Session) -> None:

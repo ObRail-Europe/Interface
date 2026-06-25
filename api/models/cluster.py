@@ -3,7 +3,7 @@
 Issu du modèle de clustering `cluster_fragilite.joblib`.
 """
 
-from sqlalchemy import String
+from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from models.base import Base
@@ -16,6 +16,10 @@ class Cluster(Base):
 
     row_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=False)
     city_name: Mapped[str] = mapped_column(String, index=True)
+    # Rattachement à `villes`, résolu par coordonnées lors de l'ETL (voir etl/resolve.py).
+    citycode: Mapped[str | None] = mapped_column(
+        String(10), ForeignKey("villes.citycode"), index=True
+    )
     lat_insee: Mapped[float | None]
     lon_insee: Mapped[float | None]
     cluster: Mapped[int] = mapped_column(index=True)
