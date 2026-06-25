@@ -336,6 +336,9 @@ DepartHeatmap {
 ```
 
 **V3.3 — Part de nuit par tranche de distance**
+
+> V3.3 OU V3.1 selon résultat
+
 - **Question** : la nuit gagne-t-elle sur la longue distance ?
 - **Type** : barres empilées 100% par tranche de distance (part nuit croissante attendue).
 - **Endpoint** : `GET /api/v1/stats/jour-nuit/par-distance`
@@ -346,6 +349,9 @@ DepartHeatmap {
 ```
 
 **V3.4 — Sankey des flux (segment → distance → transfrontalier)**
+
+> A voir selon pertinance
+
 - **Question** : comment se structurent les flux jour/nuit ?
 - **Type** : *Sankey* (original) reliant `Jour|Nuit` → tranches de distance → `National|Transfrontalier`.
 - **Accessibilité** : table des flux (source, cible, valeur) en équivalent.
@@ -396,6 +402,9 @@ TreeNode { label: string, value: int, children?: TreeNode[] }
 ```
 
 **V4.3 — Fiche profil opérateur (radar)**
+
+> Priorité P10
+
 - **Question** : quelle est la “signature” d'un opérateur ?
 - **Type** : *radar* normalisé (part nuit, distance, CO₂, couverture pays, nb lignes) + KPI.
 - **Endpoint** : `GET /api/v1/operateurs/{agency_name}/profil`
@@ -452,15 +461,6 @@ ComparaisonAvion {
 // → { modes: { mode: string, min: float, q1: float, mediane: float, q3: float, max: float, count: int }[] }
 ```
 
-**V5.4 — Émissions totales par pays/opérateur**
-- **Question** : où se concentrent les émissions absolues ?
-- **Type** : barres triées (bascule pays/opérateur).
-- **Endpoint** : `GET /api/v1/stats/co2`
-
-```jsonc
-// query: TripFilter + by: "departure_country"|"agency_name"|"mode"
-// → { groupes: { cle: string, emissions_co2_totales_t: float, co2_moy_par_pkm: float, nb_trajets: int }[] }
-```
 
 ---
 
@@ -496,16 +496,6 @@ VilleGeoPoint {
 // query: by: "code_dept"|"code_region"
 // → { mailles: { cle: string, nb_communes: int, taux_avec_gare: float,
 //                nb_trajets_total: int, accessibilite_moy: float }[] }
-```
-
-**V6.3 — Mobilité vs socio-économie (nuage bivarié)**
-- **Question** : la desserte est-elle corrélée à la dépendance automobile / au revenu ?
-- **Type** : *scatter* `taux_sans_voiture` × `revenu_median_uc`, couleur = `has_gare`, taille = population.
-- **Endpoint** : `GET /api/v1/villes` (champs sélectionnés, échantillon/pagination)
-
-```jsonc
-// query: GeoFilter + fields?: string[] + page, page_size
-// → Page<VilleListItem>  (sous-ensemble de colonnes de `villes`)
 ```
 
 **V6.4 — Amplitude de service (premier/dernier départ)**
@@ -552,6 +542,9 @@ ClusterProfil {
 ```
 
 **V7.3 — Répartition de la fragilité par région**
+
+> Priorité P10
+
 - **Question** : où se concentre la fragilité ?
 - **Type** : barres empilées par région selon `niveau_fragilite`.
 - **Endpoint** : `GET /api/v1/stats/fragilite`
@@ -610,11 +603,6 @@ FragilitePrediction { cluster: int, cluster_nom: string, niveau_fragilite: Nivea
 ```jsonc
 // → { anomalies: { type: string, libelle: string, nb: int, severite: "info"|"warn"|"error" }[] }
 ```
-
-**V8.3 — Couverture temporelle des services**
-- **Question** : sur quelle période courent les services ?
-- **Type** : barre/Gantt de `service_start_date`→`service_end_date` (couverture, trous).
-- **Endpoint** : `GET /api/v1/qualite/couverture-temporelle` → `{ periodes: { debut: date, fin: date, nb_trajets: int }[] }`.
 
 **V8.4 — Volumétrie par source**
 - **Type** : barres du nombre de trajets par `source`/`agency_name`.
