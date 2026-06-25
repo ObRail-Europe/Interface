@@ -3,7 +3,12 @@
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from repositories.interfaces import JourNuitCounts, OperateurCount, OverviewAggregates
+from repositories.interfaces import (
+    DepartAggregate,
+    JourNuitCounts,
+    OperateurCount,
+    OverviewAggregates,
+)
 
 # Agrégations calculées côté base (jamais de transfert de lignes brutes).
 _OVERVIEW_SQL = text("""
@@ -50,6 +55,16 @@ ORDER BY nb_trajets DESC
 LIMIT :limit
 """)
 
+# jointure trajets → villes par citycode résolu.
+_DEPARTS_SQL = text("""
+SELECT v.citycode, v.city_name, v.lat_insee AS lat, v.lon_insee AS lon, count(*) AS nb_trajets
+FROM trajets t
+JOIN villes v ON v.citycode = t.departure_citycode
+WHERE v.lat_insee IS NOT NULL AND v.lon_insee IS NOT NULL
+GROUP BY v.citycode, v.city_name, v.lat_insee, v.lon_insee
+ORDER BY nb_trajets DESC
+""")
+
 
 class SqlAlchemyStatsRepository:
     """Accès aux statistiques via une session SQLAlchemy."""
@@ -82,6 +97,19 @@ class SqlAlchemyStatsRepository:
                 agency_name=row["agency_name"],
                 nb_trajets=row["nb_trajets"],
                 nb_nuit=row["nb_nuit"],
+            )
+            for row in rows
+        ]
+
+    def departs(self) -> list[DepartAggregate]:
+        rows = self._session.execute(_DEPARTS_SQL).mappings().all()
+        return [
+            DepartAggregate(
+                citycode=row["citycode"],
+                city_name=row["city_name"],
+                lat=row["lat"],
+                lon=row["lon"],
+                nb_trajets=row["nb_trajets"],
             )
             for row in rows
         ]

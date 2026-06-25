@@ -18,6 +18,8 @@ class OverviewClient(Protocol):
 
     def get_operateurs(self, limit: int) -> list[dict[str, Any]]: ...
 
+    def get_departs(self) -> list[dict[str, Any]]: ...
+
 
 class HttpOverviewClient:
     """Implémentation HTTP basée sur `requests`."""
@@ -39,3 +41,6 @@ class HttpOverviewClient:
 
     def get_operateurs(self, limit: int = 5) -> list[dict[str, Any]]:
         return self._get(f"/api/v1/stats/operateurs?limit={limit}")
+
+    def get_departs(self) -> list[dict[str, Any]]:
+        return self._get("/api/v1/stats/departs")

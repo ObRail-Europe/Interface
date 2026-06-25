@@ -5,6 +5,7 @@ l'abstraction `StatsRepository`, pas d'une implémentation concrète.
 """
 
 from repositories.interfaces import StatsRepository
+from schemas.depart import DepartPoint
 from schemas.jour_nuit import JourNuitSplit, SegmentStat
 from schemas.operateur import OperateurStat
 from schemas.overview import OverviewKPI
@@ -53,4 +54,16 @@ class OverviewService:
                 part_nuit=_ratio(op.nb_nuit, op.nb_trajets),
             )
             for op in self._repository.top_operateurs(limit)
+        ]
+
+    def get_departs(self) -> list[DepartPoint]:
+        return [
+            DepartPoint(
+                citycode=d.citycode,
+                city_name=d.city_name,
+                lat=d.lat,
+                lon=d.lon,
+                nb_trajets=d.nb_trajets,
+            )
+            for d in self._repository.departs()
         ]

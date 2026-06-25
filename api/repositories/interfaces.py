@@ -39,6 +39,17 @@ class OperateurCount:
     nb_nuit: int
 
 
+@dataclass(frozen=True)
+class DepartAggregate:
+    """Ville de départ géolocalisée et son volume de trajets."""
+
+    citycode: str
+    city_name: str
+    lat: float
+    lon: float
+    nb_trajets: int
+
+
 class StatsRepository(Protocol):
     """Accès aux statistiques agrégées des trajets."""
 
@@ -47,3 +58,5 @@ class StatsRepository(Protocol):
     def jour_nuit_counts(self) -> JourNuitCounts: ...
 
     def top_operateurs(self, limit: int) -> list[OperateurCount]: ...
+
+    def departs(self) -> list[DepartAggregate]: ...

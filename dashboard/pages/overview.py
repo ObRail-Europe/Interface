@@ -8,7 +8,7 @@ from typing import Any
 from dash import Dash, Input, Output, dcc, html
 
 from api.client import OverviewClient
-from components.charts import jour_nuit_donut, operateurs_bar
+from components.charts import departs_map, jour_nuit_donut, operateurs_bar
 from components.kpi import kpi_band
 
 
@@ -28,6 +28,7 @@ def layout() -> html.Div:
                     dcc.Graph(id="operateurs-bar"),
                 ],
             ),
+            dcc.Graph(id="departs-map"),
         ],
     )
 
@@ -39,14 +40,21 @@ def register_callbacks(app: Dash, client: OverviewClient) -> None:
         Output("overview-kpi", "children"),
         Output("jour-nuit-donut", "figure"),
         Output("operateurs-bar", "figure"),
+        Output("departs-map", "figure"),
         Input("overview-trigger", "n_intervals"),
     )
-    def _load_overview(_n_intervals: int | None) -> tuple[Any, Any, Any]:
+    def _load_overview(_n_intervals: int | None) -> tuple[Any, Any, Any, Any]:
         try:
             overview = client.get_overview()
             split = client.get_jour_nuit()
             operateurs = client.get_operateurs(5)
+            departs = client.get_departs()
         except Exception as exc:  # garde-fou UI : ne pas planter si l'API est indisponible
             error = html.Div(f"Données indisponibles : {exc}", className="error")
-            return error, {}, {}
-        return kpi_band(overview), jour_nuit_donut(split), operateurs_bar(operateurs)
+            return error, {}, {}, {}
+        return (
+            kpi_band(overview),
+            jour_nuit_donut(split),
+            operateurs_bar(operateurs),
+            departs_map(departs),
+        )

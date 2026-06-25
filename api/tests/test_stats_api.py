@@ -33,3 +33,12 @@ def test_operateurs_endpoint(client: TestClient) -> None:
 def test_operateurs_endpoint_respects_limit(client: TestClient) -> None:
     data = client.get("/api/v1/stats/operateurs?limit=2").json()
     assert len(data) == 2
+
+
+def test_departs_endpoint(client: TestClient) -> None:
+    data = client.get("/api/v1/stats/departs").json()
+    assert len(data) > 0
+    paris = next(point for point in data if point["city_name"] == "Paris")
+    assert paris["nb_trajets"] == 6  # 5 « Paris » + 1 « Paris 09 Opera » (alias) dans le seed
+    assert -90 <= paris["lat"] <= 90
+    assert -180 <= paris["lon"] <= 180

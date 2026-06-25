@@ -42,3 +42,38 @@ def operateurs_bar(operateurs: list[dict[str, Any]]) -> go.Figure:
     )
     fig.update_layout(title="Top opérateurs", xaxis_title="Trajets", margin=_MARGIN)
     return fig
+
+
+def departs_map(points: list[dict[str, Any]]) -> go.Figure:
+    """Carte de chaleur des départs (V1.3) : couleur et taille ∝ volume de trajets."""
+    counts = [point["nb_trajets"] for point in points]
+    max_count = max(counts) if counts else 1
+    fig = go.Figure(
+        go.Scattergeo(
+            lat=[point["lat"] for point in points],
+            lon=[point["lon"] for point in points],
+            text=[f"{point['city_name']} — {point['nb_trajets']} départs" for point in points],
+            hoverinfo="text",
+            marker={
+                "color": counts,
+                "colorscale": "YlOrRd",
+                "showscale": True,
+                "colorbar": {"title": "Départs"},
+                "size": counts,
+                "sizemode": "area",
+                "sizeref": 2 * max_count / (35**2),
+                "sizemin": 3,
+            },
+        )
+    )
+    fig.update_layout(
+        title="Densité des départs",
+        geo={
+            "scope": "europe",
+            "center": {"lat": 46.6, "lon": 2.4},
+            "projection_scale": 4.5,
+            "showcountries": True,
+        },
+        margin=_MARGIN,
+    )
+    return fig

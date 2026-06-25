@@ -1,6 +1,11 @@
 """Tests unitaires du service Vue d'ensemble."""
 
-from repositories.interfaces import JourNuitCounts, OperateurCount, OverviewAggregates
+from repositories.interfaces import (
+    DepartAggregate,
+    JourNuitCounts,
+    OperateurCount,
+    OverviewAggregates,
+)
 from services.overview_service import OverviewService
 
 
@@ -13,10 +18,12 @@ class FakeStatsRepository:
         aggregates: OverviewAggregates | None = None,
         jour_nuit: JourNuitCounts | None = None,
         operateurs: list[OperateurCount] | None = None,
+        departs: list[DepartAggregate] | None = None,
     ) -> None:
         self._aggregates = aggregates
         self._jour_nuit = jour_nuit
         self._operateurs = operateurs or []
+        self._departs = departs or []
 
     def overview_aggregates(self) -> OverviewAggregates:
         assert self._aggregates is not None
@@ -28,6 +35,9 @@ class FakeStatsRepository:
 
     def top_operateurs(self, limit: int) -> list[OperateurCount]:
         return self._operateurs[:limit]
+
+    def departs(self) -> list[DepartAggregate]:
+        return self._departs
 
 
 def test_overview_computes_ratios_and_units() -> None:
@@ -80,3 +90,13 @@ def test_top_operateurs_computes_part_nuit_and_limits() -> None:
     assert len(result) == 1  # le repository tronque selon limit
     assert result[0].agency_name == "SNCF"
     assert result[0].part_nuit == 0.2
+
+
+def test_departs_maps_aggregates_to_dto() -> None:
+    repo = FakeStatsRepository(departs=[DepartAggregate("75056", "Paris", 48.85, 2.35, 6)])
+    points = OverviewService(repo).get_departs()
+
+    assert len(points) == 1
+    assert points[0].city_name == "Paris"
+    assert points[0].nb_trajets == 6
+    assert points[0].lat == 48.85
