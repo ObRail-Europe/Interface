@@ -2,6 +2,7 @@
 
 import os
 from collections.abc import Generator
+from pathlib import Path
 
 import pytest
 from sqlalchemy import Engine, create_engine, make_url, text
@@ -10,7 +11,11 @@ from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
 from config import settings
+from etl.loaders import load_clusters, load_trajets, load_villes, truncate_all
+from etl.resolve import resolve_clusters, resolve_trajets
 from models import Base
+
+FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def _test_url() -> URL:
@@ -63,3 +68,30 @@ def session(engine: Engine) -> Generator[Session]:
         sess.close()
         transaction.rollback()
         connection.close()
+
+
+@pytest.fixture
+def seeded_session(engine: Engine) -> Generator[Session]:
+    """Base peuplée du jeu de données seed (ingestion + résolution), nettoyée après le test.
+
+    Réutilisable par les futurs tests d'endpoints (et la CI : `data/` n'y est pas présent).
+    """
+    with Session(engine) as setup:
+        truncate_all(setup)
+        load_villes(setup, FIXTURES / "villes_sample.csv")
+        load_clusters(setup, FIXTURES / "clusters_sample.csv")
+        setup.commit()
+    load_trajets(engine, FIXTURES / "trajets_sample.csv")
+    with Session(engine) as setup:
+        resolve_clusters(setup)
+        resolve_trajets(setup)
+        setup.commit()
+
+    sess = Session(engine)
+    try:
+        yield sess
+    finally:
+        sess.close()
+        with Session(engine) as cleanup:
+            truncate_all(cleanup)
+            cleanup.commit()
