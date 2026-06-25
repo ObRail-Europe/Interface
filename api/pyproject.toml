@@ -1,7 +1,7 @@
 [project]
 name = "api"
 version = "0.1.0"
-description = "API REST ObRail Europe — backend FastAPI (MSPR TPRE532)."
+description = "API REST ObRail Europe - backend FastAPI (MSPR TPRE532)."
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [

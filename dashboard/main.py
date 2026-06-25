@@ -10,12 +10,12 @@ from dash import Dash, html
 
 API_URL = os.environ.get("API_URL", "http://localhost:8000")
 
-app = Dash(__name__, title="ObRail — Dashboard")
+app = Dash(__name__, title="ObRail - Dashboard")
 server = app.server  # exposé pour gunicorn (gunicorn main:server)
 
 app.layout = html.Div(
     [
-        html.H1("ObRail — Dashboard"),
+        html.H1("ObRail - Dashboard"),
         html.P("Hello World."),
         html.Small(f"API cible : {API_URL}"),
     ]

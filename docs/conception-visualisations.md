@@ -1,4 +1,4 @@
-# Conception du Dashboard ObRail — Visualisations, Onglets & Contrats d'API
+# Conception du Dashboard ObRail - Visualisations, Onglets & Contrats d'API
 
 > Document de conception (data-visualisation + contrats d'API) pour le frontend Dash/Plotly d'ObRail Europe.
 > Il définit **quoi** afficher (catalogue de visualisations), **comment l'organiser** (onglets, UX/UI)
@@ -63,13 +63,13 @@ Composants récurrents : **KPI card**, **barre de filtres**, **légende interact
 
 ---
 
-## 3. Accessibilité (RGAA) — règles transverses
+## 3. Accessibilité (RGAA) - règles transverses
 
 - **Ne jamais coder l'information par la seule couleur** : ajouter motif/texture, icône ou libellé (ex. trains de nuit
   = indigo **+** icône lune ; barres avec étiquette de valeur).
 - **Contraste AA** (≥ 4.5:1 texte, ≥ 3:1 éléments graphiques) ; palettes vérifiées daltonisme.
 - **Équivalent non graphique** : chaque visualisation propose une **table de données** consultable (bascule), exportable
-  CSV — sert d'alternative accessible et de preuve de transparence (exigence RGPD/qualité).
+  CSV - sert d'alternative accessible et de preuve de transparence (exigence RGPD/qualité).
 - **Navigation clavier complète** et **ARIA** : `role="img"` + `aria-label` décrivant la tendance ; focus visibles ;
   composants Dash interactifs étiquetés (`aria-label` sur filtres, tableaux avec en-têtes `<th scope>`).
 - **Pas d'information transmise uniquement au survol** : les valeurs clés restent lisibles sans hover (étiquettes,
@@ -106,7 +106,7 @@ source de données). La barre de filtres est **globale** et transverse à tous l
 | 9 | **Supervision** | « Le service est-il sain ? » | Équipes techniques ObRail |
 
 > **Pourquoi cet ordre ?** On part de la synthèse (1), on donne l'outil d'exploration brute (2), puis les **trois récits
-> métier** d'ObRail — jour/nuit (3), comparaison opérateurs (4), carbone/alternative avion (5) — avant la lecture
+> métier** d'ObRail - jour/nuit (3), comparaison opérateurs (4), carbone/alternative avion (5) - avant la lecture
 > **territoriale** (6) et **modèle** (7). Les onglets 8–9 sont les vues « confiance & exploitation » (qualité, santé).
 
 ---
@@ -127,7 +127,7 @@ Page<T> {
 }
 ```
 
-- **Filtre commun `TripFilter`** (query params, tous optionnels) — accepté par tous les endpoints d'agrégation de
+- **Filtre commun `TripFilter`** (query params, tous optionnels) - accepté par tous les endpoints d'agrégation de
   trajets, ce qui rend la **barre de filtres globale** universelle :
 
 ```jsonc
@@ -161,9 +161,9 @@ ApiError { detail: string, code: string, field?: string }   // statuts 4xx/5xx
 
 Chaque fiche : **question → type (+ justification UX) → encodage → interactions → accessibilité → endpoint(s) → DTO**.
 
-### Onglet 1 — Vue d'ensemble
+### Onglet 1 - Vue d'ensemble
 
-**V1.1 — Bandeau de KPI**
+**V1.1 - Bandeau de KPI**
 - **Question** : quels sont les chiffres-clés du réseau (sous filtre courant) ?
 - **Type** : 8 *KPI cards* (valeur + libellé + micro-tendance). Lecture instantanée, hiérarchie typographique.
 - **Encodage** : nombre + unité + sparkline optionnelle ; icône sémantique par carte.
@@ -186,14 +186,14 @@ OverviewKPI {
 }
 ```
 
-**V1.2 — Donut Jour / Nuit**
+**V1.2 - Donut Jour / Nuit**
 - **Question** : quelle est la part jour vs nuit ?
 - **Type** : donut **2 parts** (exception légitime au “pas de camembert”), centre = % nuit en gros.
 - **Encodage** : couleurs sémantiques jour/nuit + icône lune/soleil.
 - **Interactions** : clic sur une part → applique le filtre `is_night` global.
 - **Endpoint** : `GET /api/v1/stats/jour-nuit` → voir **V3.1** (`JourNuitCompare`).
 
-**V1.3 — Carte de chaleur nationale des départs**
+**V1.3 - Carte de chaleur nationale des départs**
 - **Question** : où partent les trajets ?
 - **Type** : carte (hexbin/densité) des villes de départ pondérées par volume. Lecture géographique immédiate.
 - **Encodage** : densité = viridis ; zoom/pan.
@@ -201,16 +201,16 @@ OverviewKPI {
 - **Accessibilité** : table associée « top 20 villes de départ » comme équivalent.
 - **Endpoint** : `GET /api/v1/trajets/flux?group=depart` → voir **V2.1** (`Flow`).
 
-**V1.4 — Top 5 opérateurs (barres)**
+**V1.4 - Top 5 opérateurs (barres)**
 - **Question** : qui opère le plus de trajets ?
 - **Type** : barres horizontales triées (lecture des rangs).
 - **Endpoint** : `GET /api/v1/stats/operateurs?limit=5` → voir **V4.1** (`OperateurStat`).
 
 ---
 
-### Onglet 2 — Explorateur de trajets
+### Onglet 2 - Explorateur de trajets
 
-**V2.1 — Carte des liaisons (arcs origine→destination)**
+**V2.1 - Carte des liaisons (arcs origine→destination)**
 - **Question** : quelles liaisons relient quelles villes ?
 - **Type** : *arc map* (lignes O-D) sur fond clair ; épaisseur = volume, couleur = jour/nuit.
 - **Encodage** : arc épaisseur=`count`, couleur=part nuit, opacité pour densité.
@@ -233,9 +233,9 @@ Flow {
 }
 ```
 
-**V2.2 — Table des trajets (filtrable, triable, paginée)**
+**V2.2 - Table des trajets (filtrable, triable, paginée)**
 - **Question** : détail trajet par trajet ?
-- **Type** : *data table* paginée serveur — colonnes triables, recherche, export CSV.
+- **Type** : *data table* paginée serveur - colonnes triables, recherche, export CSV.
 - **Interactions** : tri (`sort`), filtres locaux mappés sur `TripFilter`, clic ligne → V2.4.
 - **Accessibilité** : table HTML native, en-têtes `scope`, pagination annoncée ARIA.
 - **Endpoint** : `GET /api/v1/trajets`
@@ -261,7 +261,7 @@ TripListItem {
 }
 ```
 
-**V2.3 — Histogramme des distances**
+**V2.3 - Histogramme des distances**
 - **Question** : comment se répartissent les distances (et la part nuit par tranche) ?
 - **Type** : histogramme empilé jour/nuit ; révèle les trajets longue distance (cible trains de nuit).
 - **Endpoint** : `GET /api/v1/stats/distance-distribution`
@@ -275,7 +275,7 @@ DistanceHistogram {
 }
 ```
 
-**V2.4 — Détail d'un trajet (panneau details-on-demand)**
+**V2.4 - Détail d'un trajet (panneau details-on-demand)**
 - **Question** : tout savoir sur un trajet précis ?
 - **Type** : panneau latéral fiche (horaires, gares, calendrier de service, émissions).
 - **Endpoint** : `GET /api/v1/trajets/{trip_id}`
@@ -296,9 +296,9 @@ TripDetail {
 
 ---
 
-### Onglet 3 — Jour vs Nuit  *(cœur métier ObRail)*
+### Onglet 3 - Jour vs Nuit  *(cœur métier ObRail)*
 
-**V3.1 — Comparateur apparié jour vs nuit**
+**V3.1 - Comparateur apparié jour vs nuit**
 - **Question** : comment jour et nuit diffèrent sur les indicateurs clés ?
 - **Type** : *paired bars* / tableau comparatif (volume, distance moyenne, CO₂/pkm, part transfrontalière).
 - **Endpoint** : `GET /api/v1/stats/jour-nuit`
@@ -320,7 +320,7 @@ SegmentStat {
 }
 ```
 
-**V3.2 — Heatmap heure de départ × jour de semaine**
+**V3.2 - Heatmap heure de départ × jour de semaine**
 - **Question** : quand partent les trains (rythme jour/nuit) ?
 - **Type** : *heatmap* 24h × 7j ; révèle le creux nocturne et les pics. Bascule jour/nuit/tous.
 - **Encodage** : intensité = nb trajets (viridis) ; axes lisibles.
@@ -335,7 +335,7 @@ DepartHeatmap {
 }
 ```
 
-**V3.3 — Part de nuit par tranche de distance**
+**V3.3 - Part de nuit par tranche de distance**
 
 > V3.3 OU V3.1 selon résultat
 
@@ -348,7 +348,7 @@ DepartHeatmap {
 // → { bins: { min_km: float, max_km: float, part_nuit: float, count: int }[] }
 ```
 
-**V3.4 — Sankey des flux (segment → distance → transfrontalier)**
+**V3.4 - Sankey des flux (segment → distance → transfrontalier)**
 
 > A voir selon pertinance
 
@@ -368,9 +368,9 @@ Sankey {
 
 ---
 
-### Onglet 4 — Opérateurs & lignes
+### Onglet 4 - Opérateurs & lignes
 
-**V4.1 — Classement des opérateurs**
+**V4.1 - Classement des opérateurs**
 - **Question** : qui opère le plus, et avec quelle empreinte ?
 - **Type** : barres triées + métrique bascule (volume / CO₂ moyen / part nuit / nb pays).
 - **Endpoint** : `GET /api/v1/stats/operateurs`
@@ -390,7 +390,7 @@ OperateurStat {
 }
 ```
 
-**V4.2 — Treemap volumes (opérateur → mode → pays)**
+**V4.2 - Treemap volumes (opérateur → mode → pays)**
 - **Question** : comment le volume se répartit hiérarchiquement ?
 - **Type** : *treemap* ; lecture des proportions imbriquées en un écran.
 - **Endpoint** : `GET /api/v1/stats/operateurs/treemap`
@@ -401,7 +401,7 @@ OperateurStat {
 TreeNode { label: string, value: int, children?: TreeNode[] }
 ```
 
-**V4.3 — Fiche profil opérateur (radar)**
+**V4.3 - Fiche profil opérateur (radar)**
 
 > Priorité P10
 
@@ -421,9 +421,9 @@ OperateurProfil {
 
 ---
 
-### Onglet 5 — Empreinte carbone (train vs avion)
+### Onglet 5 - Empreinte carbone (train vs avion)
 
-**V5.1 — Compteur « CO₂ évité vs avion »**
+**V5.1 - Compteur « CO₂ évité vs avion »**
 - **Question** : combien d'émissions le train économise-t-il face à l'avion ?
 - **Type** : grand *number callout* + barres comparées (train vs estimation avion) par tranche de distance.
 - **Note méthodo** : facteur avion paramétrable, **affiché** (transparence) ; comparaison à voyageur-km.
@@ -441,7 +441,7 @@ ComparaisonAvion {
 }
 ```
 
-**V5.2 — Distance × intensité carbone (densité)**
+**V5.2 - Distance × intensité carbone (densité)**
 - **Question** : l'intensité carbone varie-t-elle avec la distance/le mode ?
 - **Type** : *hexbin/scatter densité* (distance_km × co2_per_pkm), couleur = mode ou jour/nuit. Agrégé (pas 13M points).
 - **Endpoint** : `GET /api/v1/stats/co2/scatter`
@@ -451,7 +451,7 @@ ComparaisonAvion {
 // → { bins: { x_km: float, y_co2_pkm: float, count: int }[] }
 ```
 
-**V5.3 — Distribution du CO₂/pkm par mode**
+**V5.3 - Distribution du CO₂/pkm par mode**
 - **Question** : quelle dispersion d'intensité carbone par mode ?
 - **Type** : *box plot / violon* par mode (médiane, quartiles, extrêmes).
 - **Endpoint** : `GET /api/v1/stats/co2/par-mode`
@@ -464,9 +464,9 @@ ComparaisonAvion {
 
 ---
 
-### Onglet 6 — Territoires & couverture ferroviaire
+### Onglet 6 - Territoires & couverture ferroviaire
 
-**V6.1 — Carte de la couverture ferroviaire**
+**V6.1 - Carte de la couverture ferroviaire**
 - **Question** : quelles communes ont une gare / quel niveau d'accès ?
 - **Type** : carte points/choroplèthe ; dimension bascule (`has_gare`, `accessibilite_ord`, `nb_trajets_total`,
   `dist_gare_min_m`).
@@ -487,7 +487,7 @@ VilleGeoPoint {
 }
 ```
 
-**V6.2 — Couverture par département / région**
+**V6.2 - Couverture par département / région**
 - **Question** : quels territoires sont les mieux desservis ?
 - **Type** : barres triées ou *small multiples* ; bascule maille (département/région).
 - **Endpoint** : `GET /api/v1/stats/couverture`
@@ -498,19 +498,19 @@ VilleGeoPoint {
 //                nb_trajets_total: int, accessibilite_moy: float }[] }
 ```
 
-**V6.4 — Amplitude de service (premier/dernier départ)**
+**V6.4 - Amplitude de service (premier/dernier départ)**
 - **Question** : jusqu'à quelle heure le territoire est-il desservi ?
 - **Type** : distribution de `amplitude_moy_h` + indicateur `dernier_depart_apres_minuit`.
 - **Endpoint** : `GET /api/v1/stats/amplitude` → `{ bins: {...}[], part_apres_minuit: float }`.
 
-**V6.5 — Détail commune**
+**V6.5 - Détail commune**
 - **Endpoint** : `GET /api/v1/villes/{citycode}` → `VilleDetail` (toutes colonnes `villes` + cluster/fragilité liés).
 
 ---
 
-### Onglet 7 — Fragilité territoriale  *(modèle de clustering)*
+### Onglet 7 - Fragilité territoriale  *(modèle de clustering)*
 
-**V7.1 — Carte des clusters**
+**V7.1 - Carte des clusters**
 - **Question** : comment se répartissent les profils de territoires ?
 - **Type** : carte points colorés par `cluster_nom` (palette qualitative) ; légende = libellés de clusters.
 - **Endpoint** : `GET /api/v1/clusters/carte`
@@ -524,7 +524,7 @@ ClusterGeoPoint {
 }
 ```
 
-**V7.2 — Profils de clusters (coordonnées parallèles)**
+**V7.2 - Profils de clusters (coordonnées parallèles)**
 - **Question** : qu'est-ce qui caractérise chaque cluster ?
 - **Type** : *parallel coordinates* sur features normalisées (revenu, taux_sans_voiture, part_65plus, densité,
   nb_trajets, dist_gare…). Vue d'ensemble multivariée. Radar par cluster en complément.
@@ -541,7 +541,7 @@ ClusterProfil {
 }
 ```
 
-**V7.3 — Répartition de la fragilité par région**
+**V7.3 - Répartition de la fragilité par région**
 
 > Priorité P10
 
@@ -554,7 +554,7 @@ ClusterProfil {
 // → { mailles: { cle: string, repartition: { niveau: NiveauFragilite, nb: int }[] }[] }
 ```
 
-**V7.4 — Liste / effectifs des clusters**
+**V7.4 - Liste / effectifs des clusters**
 - **Type** : cartes ou barres des effectifs par cluster (point d'entrée vers V7.2).
 - **Endpoint** : `GET /api/v1/clusters`
 
@@ -563,7 +563,7 @@ ClusterProfil {
 ClusterSummary { cluster: int, cluster_nom: string, niveau_fragilite: NiveauFragilite, effectif: int }
 ```
 
-**V7.5 — Simulateur de fragilité (modèle live)**
+**V7.5 - Simulateur de fragilité (modèle live)**
 - **Question** : à quel cluster appartiendrait un territoire donné ?
 - **Type** : formulaire (features) → résultat cluster + niveau (utilise `cluster_fragilite.joblib`).
 - **Accessibilité** : formulaire étiqueté, résultat annoncé (ARIA live region).
@@ -583,9 +583,9 @@ FragilitePrediction { cluster: int, cluster_nom: string, niveau_fragilite: Nivea
 
 ---
 
-### Onglet 8 — Qualité des données
+### Onglet 8 - Qualité des données
 
-**V8.1 — Complétude par colonne**
+**V8.1 - Complétude par colonne**
 - **Question** : quelles colonnes ont des valeurs manquantes ?
 - **Type** : barres horizontales du **% de complétude** par colonne et par table.
 - **Endpoint** : `GET /api/v1/qualite/completude`
@@ -595,7 +595,7 @@ FragilitePrediction { cluster: int, cluster_nom: string, niveau_fragilite: Nivea
 // → { table: string, colonnes: { nom: string, taux_complet: float, nb_nuls: int }[], nb_lignes: int }
 ```
 
-**V8.2 — Anomalies & doublons**
+**V8.2 - Anomalies & doublons**
 - **Question** : quelles incohérences subsistent (doublons, codes gares manquants, horaires invalides) ?
 - **Type** : cartes-compteurs + table de détail.
 - **Endpoint** : `GET /api/v1/qualite/anomalies`
@@ -604,26 +604,26 @@ FragilitePrediction { cluster: int, cluster_nom: string, niveau_fragilite: Nivea
 // → { anomalies: { type: string, libelle: string, nb: int, severite: "info"|"warn"|"error" }[] }
 ```
 
-**V8.4 — Volumétrie par source**
+**V8.4 - Volumétrie par source**
 - **Type** : barres du nombre de trajets par `source`/`agency_name`.
 - **Endpoint** : `GET /api/v1/qualite/volumetrie` → `{ sources: { cle: string, nb: int }[] }`.
 
 ---
 
-### Onglet 9 — Supervision  *(monitoring — phase ultérieure)*
+### Onglet 9 - Supervision  *(monitoring - phase ultérieure)*
 
 > Alimenté par la stack monitoring (Prometheus/Grafana). Côté dashboard : panneaux
 > d'état + embarquement de tableaux Grafana.
 
-**V9.1 — État de santé du service**
+**V9.1 - État de santé du service**
 - **Type** : feux d'état (API, BDD), badges UP/DOWN, dernière vérification.
 - **Endpoint** : `GET /health` (déjà au MVP) ; `GET /api/v1/health/details` → `{ services: { nom, statut, latence_ms }[] }`.
 
-**V9.2 — Métriques (latence, taux d'erreurs, volumes)**
+**V9.2 - Métriques (latence, taux d'erreurs, volumes)**
 - **Type** : séries temporelles (latence p50/p95, taux d'erreurs), jauges.
 - **Source** : `GET /metrics` (format Prometheus) scrappé par Prometheus, restitué via Grafana embarqué.
 
-**V9.3 — Journal applicatif & anomalies**
+**V9.3 - Journal applicatif & anomalies**
 - **Type** : table des derniers événements/incidents (niveau, horodatage, message).
 - **Source** : logs structurés → backend de logs (déféré).
 

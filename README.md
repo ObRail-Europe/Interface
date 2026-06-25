@@ -1,4 +1,4 @@
-# ObRail Europe — Plateforme ferroviaire (MSPR TPRE532)
+# ObRail Europe - Plateforme ferroviaire (MSPR TPRE532)
 
 Solution applicative conteneurisée pour **ObRail Europe**, observatoire du ferroviaire et de la mobilité
 bas-carbone. Elle expose les données de **trajets** ferroviaires, de **villes** et un modèle de **clustering de
@@ -66,9 +66,9 @@ Interface/
 
 ## Qualité & workflow
 
-- **CI** : GitHub Actions (`.github/workflows/ci.yml`) — lint, tests, build des images Docker.
+- **CI** : GitHub Actions (`.github/workflows/ci.yml`) - lint, tests, build des images Docker.
 - **Lint/format** : `ruff` (config par service). **Hooks** : `pre-commit` (`.pre-commit-config.yaml`).
-- **Branches** : GitHub Flow — `feat/…`, `fix/…` → PR → CI verte → revue → merge sur `main`.
+- **Branches** : GitHub Flow - `feat/…`, `fix/…` → PR → CI verte → revue → merge sur `main`.
 - **Commits** : [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `ci:`, `docs:`…).
 - **Secrets** : `.env` local (gitignored), GitHub Secrets en CI. Jamais de secret commité.
 
