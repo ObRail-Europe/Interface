@@ -95,3 +95,22 @@ def seeded_session(engine: Engine) -> Generator[Session]:
         with Session(engine) as cleanup:
             truncate_all(cleanup)
             cleanup.commit()
+
+
+@pytest.fixture
+def client(seeded_session: Session) -> Generator:
+    """Client HTTP de test : l'API requête la base seed (override de get_db)."""
+    from fastapi.testclient import TestClient
+
+    from database import get_db
+    from main import app
+
+    def _override_get_db() -> Generator[Session]:
+        yield seeded_session
+
+    app.dependency_overrides[get_db] = _override_get_db
+    try:
+        with TestClient(app) as test_client:
+            yield test_client
+    finally:
+        app.dependency_overrides.clear()
