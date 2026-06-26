@@ -7,7 +7,7 @@ from typing import Any
 
 from dash import Dash, Input, Output, dcc, html
 
-from api.client import OverviewClient
+from api.overview_client import OverviewClient
 from components.charts import departs_map, jour_nuit_donut, operateurs_bar
 from components.kpi import kpi_band
 

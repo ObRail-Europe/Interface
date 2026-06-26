@@ -1,6 +1,6 @@
 """Tests des composants graphiques (fonctions pures, sans API)."""
 
-from components.charts import departs_map, jour_nuit_donut, operateurs_bar
+from components.charts import departs_map, jour_nuit_donut, liaisons_map, operateurs_bar
 
 
 def test_jour_nuit_donut_values() -> None:
@@ -41,3 +41,37 @@ def test_departs_map_points() -> None:
 
 def test_departs_map_empty_does_not_crash() -> None:
     assert len(departs_map([]).data[0].lat) == 0
+
+
+_LIAISONS = [
+    {
+        "departure_city": "Paris",
+        "departure": {"lat": 48.85, "lon": 2.35},
+        "arrival_city": "Lyon",
+        "arrival": {"lat": 45.76, "lon": 4.84},
+        "nb_trajets": 3,
+        "part_nuit": 0.0,
+        "distance_moy_km": 425.0,
+        "co2_moy_par_pkm": 2.4,
+    },
+    {
+        "departure_city": "Lyon",
+        "departure": {"lat": 45.76, "lon": 4.84},
+        "arrival_city": "Marseille",
+        "arrival": {"lat": 43.3, "lon": 5.37},
+        "nb_trajets": 1,
+        "part_nuit": 1.0,
+        "distance_moy_km": 278.0,
+        "co2_moy_par_pkm": 2.3,
+    },
+]
+
+
+def test_liaisons_map_one_trace_per_liaison() -> None:
+    fig = liaisons_map(_LIAISONS)
+    assert len(fig.data) == 2
+    assert list(fig.data[0].lat) == [48.85, 45.76]  # arc Paris→Lyon
+
+
+def test_liaisons_map_empty_does_not_crash() -> None:
+    assert len(liaisons_map([]).data) == 0

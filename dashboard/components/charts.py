@@ -77,3 +77,48 @@ def departs_map(points: list[dict[str, Any]]) -> go.Figure:
         margin=_MARGIN,
     )
     return fig
+
+
+def _blend_jour_nuit(part_nuit: float) -> str:
+    """Couleur interpolée entre jour et nuit selon la part de nuit."""
+    jour = (0xE8, 0xA3, 0x3D)
+    nuit = (0x3B, 0x4C, 0xC0)
+    r, g, b = (round(j + (n - j) * part_nuit) for j, n in zip(jour, nuit, strict=True))
+    return f"rgb({r}, {g}, {b})"
+
+
+def liaisons_map(liaisons: list[dict[str, Any]]) -> go.Figure:
+    """Carte des liaisons origine→destination (V2.1) : un arc par liaison.
+
+    Couleur = part de nuit (ambre→indigo), épaisseur ∝ volume.
+    """
+    fig = go.Figure()
+    for liaison in liaisons:
+        dep, arr = liaison["departure"], liaison["arrival"]
+        fig.add_trace(
+            go.Scattergeo(
+                lat=[dep["lat"], arr["lat"]],
+                lon=[dep["lon"], arr["lon"]],
+                mode="lines+markers",
+                line={
+                    "width": 1 + liaison["nb_trajets"] ** 0.5,
+                    "color": _blend_jour_nuit(liaison["part_nuit"]),
+                },
+                marker={"size": 3, "color": "#5a6478"},
+                hoverinfo="text",
+                text=f"{liaison['departure_city']} → {liaison['arrival_city']} : "
+                f"{liaison['nb_trajets']} trajets",
+                showlegend=False,
+            )
+        )
+    fig.update_layout(
+        title="Liaisons origine → destination",
+        geo={
+            "scope": "europe",
+            "center": {"lat": 46.6, "lon": 2.4},
+            "projection_scale": 4.5,
+            "showcountries": True,
+        },
+        margin=_MARGIN,
+    )
+    return fig

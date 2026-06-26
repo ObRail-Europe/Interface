@@ -60,3 +60,25 @@ class StatsRepository(Protocol):
     def top_operateurs(self, limit: int) -> list[OperateurCount]: ...
 
     def departs(self) -> list[DepartAggregate]: ...
+
+
+@dataclass(frozen=True)
+class LiaisonAggregate:
+    """Liaison origine→destination agrégée (volume, part de nuit, moyennes)."""
+
+    departure_city: str
+    departure_lat: float
+    departure_lon: float
+    arrival_city: str
+    arrival_lat: float
+    arrival_lon: float
+    nb_trajets: int
+    nb_nuit: int
+    distance_moy_km: float | None
+    co2_moy_par_pkm: float | None
+
+
+class TrajetRepository(Protocol):
+    """Accès aux trajets de l'onglet « Explorateur de trajets »."""
+
+    def top_liaisons(self, limit: int) -> list[LiaisonAggregate]: ...
