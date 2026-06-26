@@ -150,6 +150,12 @@ Les **services** sont testés avec des doublures en mémoire ; les **endpoints**
 | V1.4 Top opérateurs | `GET /api/v1/stats/operateurs?limit=5` | barres horizontales triées |
 | V1.3 Densité des départs | `GET /api/v1/stats/departs` | carte géo, couleur/taille ∝ volume de départs |
 
+**Performances** : ces endpoints lisent des **vues matérialisées** (`mv_overview_kpi`,
+`mv_operateurs`, `mv_departs`, cf. `etl/views.py`) — les agrégats sur ~13M trajets sont
+**précalculés** et rafraîchis par l'ETL (`REFRESH MATERIALIZED VIEW CONCURRENTLY`, non bloquant
+grâce à un **index unique** par vue). Un index B-tree classique n'aiderait pas une agrégation
+plein-table.
+
 Documentation interactive de l'API : **Swagger** sur `http://localhost:8000/docs`.
 
 ## Qualité & workflow
