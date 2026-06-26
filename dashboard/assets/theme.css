@@ -1,0 +1,57 @@
+:root {
+  --c-jour: #e8a33d; /* trains de jour  */
+  --c-nuit: #3b4cc0; /* trains de nuit  */
+  --c-text: #1f2a44;
+  --c-muted: #5a6478;
+  --c-surface: #f5f6fa;
+}
+
+.app {
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem 1.5rem;
+  color: var(--c-text);
+}
+
+.kpi-band {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+
+.kpi-card {
+  background: var(--c-surface);
+  border-radius: 10px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.kpi-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.kpi-label {
+  font-size: 0.8rem;
+  color: var(--c-muted);
+  margin-top: 0.25rem;
+}
+
+.charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 720px) {
+  .charts-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.error {
+  color: #b00020;
+  padding: 0.75rem;
+}

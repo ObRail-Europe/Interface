@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from config import settings
 from etl.loaders import load_clusters, load_trajets, load_villes, truncate_all
 from etl.resolve import resolve_clusters, resolve_trajets
+from etl.views import create_views, drop_views, refresh_views
 from models import Base
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -53,6 +54,9 @@ def engine() -> Engine:
     except OperationalError:
         pytest.skip("PostgreSQL indisponible — test d'intégration ignoré")
     Base.metadata.create_all(eng)  # idempotent : crée les tables manquantes
+    with eng.begin() as connection:  # vues matérialisées (recréées : reflètent la définition)
+        drop_views(connection)
+        create_views(connection)
     return eng
 
 
@@ -86,6 +90,7 @@ def seeded_session(engine: Engine) -> Generator[Session]:
         resolve_clusters(setup)
         resolve_trajets(setup)
         setup.commit()
+    refresh_views(engine)  # les vues matérialisées reflètent le seed
 
     sess = Session(engine)
     try:
@@ -95,3 +100,22 @@ def seeded_session(engine: Engine) -> Generator[Session]:
         with Session(engine) as cleanup:
             truncate_all(cleanup)
             cleanup.commit()
+
+
+@pytest.fixture
+def client(seeded_session: Session) -> Generator:
+    """Client HTTP de test : l'API requête la base seed (override de get_db)."""
+    from fastapi.testclient import TestClient
+
+    from database import get_db
+    from main import app
+
+    def _override_get_db() -> Generator[Session]:
+        yield seeded_session
+
+    app.dependency_overrides[get_db] = _override_get_db
+    try:
+        with TestClient(app) as test_client:
+            yield test_client
+    finally:
+        app.dependency_overrides.clear()

@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 from database import engine
 from etl.loaders import load_clusters, load_trajets, load_villes, truncate_all
 from etl.resolve import resolution_stats, resolve_clusters, resolve_trajets
+from etl.views import refresh_views
 from models import Trajet
 
 # data/ à la racine du dépôt (ou /data dans le conteneur).
@@ -65,6 +66,9 @@ def main() -> None:
                 f"arrivée {stats['arrivee_resolus']}/{total} "
                 f"({100 * stats['arrivee_resolus'] / total:.0f}%)"
             )
+
+    refresh_views(engine)  # met à jour les vues matérialisées de la vue d'ensemble
+    print("vues     : rafraîchies")
 
 
 if __name__ == "__main__":

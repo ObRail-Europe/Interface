@@ -96,19 +96,67 @@ Choix de modélisation :
 Interface/
 ├── docker-compose.yml      # orchestration db + api + dashboard
 ├── .env.example            # variables d'environnement (modèle)
-├── api/                    # backend FastAPI
-│   ├── main.py             # app + GET /health
-│   ├── config.py           # settings (pydantic-settings)
-│   ├── database.py         # moteur/session SQLAlchemy + init_db()/drop_db()
-│   ├── init_db.py          # script : crée le schéma dans PostgreSQL
+├── api/                    # backend FastAPI (couches routers/services/repositories/schemas)
+│   ├── main.py             # create_app() : routers + GET /health
+│   ├── routers/            # contrôleurs HTTP
+│   ├── services/           # cas d'usage métier
+│   ├── repositories/       # accès données (Protocol + SQLAlchemy)
+│   ├── schemas/            # DTO Pydantic
+│   ├── dependencies.py     # injection de dépendances
 │   ├── models/             # modèles ORM : Base, Ville, Cluster, Trajet
-│   └── tests/              # tests métadonnées + round-trip Postgres
-├── dashboard/              # frontend Dash
-│   ├── main.py             # app Dash + server (gunicorn)
+│   ├── etl/                # ingestion + résolution des jointures
+│   ├── migrations/         # Alembic
+│   └── tests/
+├── dashboard/              # frontend Dash (couches api/components/pages)
+│   ├── main.py             # create_app() : onglets + server (gunicorn)
+│   ├── api/                # client de l'API (Protocol + HTTP)
+│   ├── components/         # composants purs (KPI, graphiques)
+│   ├── pages/              # onglets (layout + callbacks)
 │   └── tests/
 ├── data/                   # CSV + modèle .joblib (non versionnés)
 └── .github/workflows/ci.yml
 ```
+
+## Architecture applicative (clean architecture)
+
+Les deux services sont organisés en **couches** avec **inversion de dépendance** : les couches
+métier dépendent d'abstractions (`Protocol`), pas d'implémentations — d'où une bonne testabilité.
+
+**API** — câblage `router → service → repository → session` (via `dependencies.py`) :
+
+| Couche | Dossier | Rôle |
+| --- | --- | --- |
+| Présentation | `routers/` | Contrôleurs HTTP (FastAPI), validation, statuts |
+| Service | `services/` | Cas d'usage métier (ratios, conversions, assemblage des DTO) |
+| Accès données | `repositories/` | `Protocol` + implémentation SQLAlchemy (agrégations SQL) |
+| Contrats | `schemas/` | DTO Pydantic |
+
+Les **services** sont testés avec des doublures en mémoire ; les **endpoints** avec une base seed.
+
+**Dashboard** :
+
+| Couche | Dossier | Rôle |
+| --- | --- | --- |
+| Infrastructure | `api/` | `OverviewClient` (`Protocol`) + client HTTP |
+| Présentation | `components/` | Fonctions **pures** `données → composant/figure` (testables sans navigateur) |
+| Page | `pages/` | Layout + callbacks (client injecté) |
+
+## Onglet « Vue d'ensemble » (V1)
+
+| Viz | Endpoint API | Visualisation |
+| --- | --- | --- |
+| V1.1 Bandeau de KPI | `GET /api/v1/stats/overview` | 8 cartes (trajets, % nuit, opérateurs, villes, pays, transfrontalier, distance médiane, CO₂) |
+| V1.2 Donut jour/nuit | `GET /api/v1/stats/jour-nuit` | donut 2 parts (jour = ambre, nuit = indigo) |
+| V1.4 Top opérateurs | `GET /api/v1/stats/operateurs?limit=5` | barres horizontales triées |
+| V1.3 Densité des départs | `GET /api/v1/stats/departs` | carte géo, couleur/taille ∝ volume de départs |
+
+**Performances** : ces endpoints lisent des **vues matérialisées** (`mv_overview_kpi`,
+`mv_operateurs`, `mv_departs`, cf. `etl/views.py`) — les agrégats sur ~13M trajets sont
+**précalculés** et rafraîchis par l'ETL (`REFRESH MATERIALIZED VIEW CONCURRENTLY`, non bloquant
+grâce à un **index unique** par vue). Un index B-tree classique n'aiderait pas une agrégation
+plein-table.
+
+Documentation interactive de l'API : **Swagger** sur `http://localhost:8000/docs`.
 
 ## Qualité & workflow
 
@@ -120,10 +168,11 @@ Interface/
 
 ## Feuille de route
 
-Phase features (sessions ultérieures) :
+**Réalisé** : socle conteneurisé, schéma + ETL (ingestion & résolution des jointures),
+**onglet Vue d'ensemble** (KPI, jour/nuit, opérateurs, départs).
 
-- **API** : `/trajets`, `/trajets/{id}`, `/stats/volumes`, `/stats/jour-nuit`, `/villes`, `/clusters`, `/fragilite`…
-- **Dashboard** : pages Vue d'ensemble, Trajets, Jour/Nuit, Opérateurs, Carbone/CO₂, Villes & couverture,
-  Fragilité/Clusters.
-- **ETL** : ingestion des CSV (`data/`) dans les tables — le **schéma ORM est en place**, reste le chargement des données.
+**À venir** :
+
+- **Onglets** : Explorateur de trajets, Jour/Nuit (détaillé), Opérateurs, Carbone/CO₂,
+  Territoires & couverture, Fragilité/Clusters, Qualité des données, Supervision.
 - **Monitoring** : Prometheus + Grafana. **Tests E2E** : Playwright.
