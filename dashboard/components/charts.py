@@ -143,3 +143,25 @@ def liaisons_map(liaisons: list[dict[str, Any]]) -> go.Figure:
         legend={"orientation": "h"},
     )
     return fig
+
+
+def distance_histogram(histogram: dict[str, Any]) -> go.Figure:
+    """Histogramme empilé des distances (V2.3), réparti jour/nuit."""
+    bins = histogram["bins"]
+    x = [b["min_km"] for b in bins]
+    fig = go.Figure()
+    fig.add_trace(
+        go.Bar(x=x, y=[b["count_jour"] for b in bins], name="Jour", marker_color=COLOR_JOUR)
+    )
+    fig.add_trace(
+        go.Bar(x=x, y=[b["count_nuit"] for b in bins], name="Nuit", marker_color=COLOR_NUIT)
+    )
+    fig.update_layout(
+        barmode="stack",
+        title=f"Distribution des distances (pas {histogram['bin_km']} km)",
+        xaxis_title="Distance (km)",
+        yaxis_title="Trajets",
+        margin=_MARGIN,
+        legend={"orientation": "h"},
+    )
+    return fig

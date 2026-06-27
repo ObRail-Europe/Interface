@@ -95,6 +95,16 @@ class TrajetFilter:
     distance_max_km: float | None = None
 
 
+@dataclass(frozen=True)
+class DistanceBinAggregate:
+    """Tranche de distance avec décompte jour/nuit."""
+
+    min_km: float
+    max_km: float
+    count_jour: int
+    count_nuit: int
+
+
 class TrajetRepository(Protocol):
     """Accès aux trajets de l'onglet « Explorateur de trajets »."""
 
@@ -108,3 +118,5 @@ class TrajetRepository(Protocol):
         page: int,
         page_size: int,
     ) -> tuple[list[Trajet], int]: ...
+
+    def distance_histogram(self, bin_km: int) -> list[DistanceBinAggregate]: ...

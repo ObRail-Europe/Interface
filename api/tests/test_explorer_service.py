@@ -3,7 +3,7 @@
 from types import SimpleNamespace
 from typing import Any
 
-from repositories.interfaces import LiaisonAggregate, TrajetFilter
+from repositories.interfaces import DistanceBinAggregate, LiaisonAggregate, TrajetFilter
 from schemas.trajet import TripFilter
 from services.explorer_service import ExplorerService
 
@@ -16,10 +16,12 @@ class FakeTrajetRepository:
         liaisons: list[LiaisonAggregate] | None = None,
         rows: list[Any] | None = None,
         total: int = 0,
+        distance_bins: list[DistanceBinAggregate] | None = None,
     ) -> None:
         self._liaisons = liaisons or []
         self._rows = rows or []
         self._total = total
+        self._distance_bins = distance_bins or []
 
     def top_liaisons(self, limit: int) -> list[LiaisonAggregate]:
         return self._liaisons[:limit]
@@ -28,6 +30,9 @@ class FakeTrajetRepository:
         self, criteria: TrajetFilter, sort_field: str, sort_desc: bool, page: int, page_size: int
     ) -> tuple[list[Any], int]:
         return self._rows, self._total
+
+    def distance_histogram(self, bin_km: int) -> list[DistanceBinAggregate]:
+        return self._distance_bins
 
 
 def test_get_liaisons_maps_and_computes_part_nuit() -> None:
@@ -82,3 +87,16 @@ def test_list_trajets_builds_page() -> None:
     assert page.pages == 3  # ceil(42 / 20)
     assert page.page == 2
     assert page.items[0].departure_city == "Paris"
+
+
+def test_distance_histogram_snaps_bin_to_multiple_of_25() -> None:
+    repo = FakeTrajetRepository(distance_bins=[DistanceBinAggregate(0.0, 100.0, 5, 1)])
+    hist = ExplorerService(repo).get_distance_histogram(bin_km=110)
+
+    assert hist.bin_km == 100  # 110 -> 4 × 25
+    assert hist.bins[0].count_jour == 5
+
+
+def test_distance_histogram_has_floor_bin() -> None:
+    hist = ExplorerService(FakeTrajetRepository()).get_distance_histogram(bin_km=10)
+    assert hist.bin_km == 25  # plancher

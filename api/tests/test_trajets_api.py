@@ -45,3 +45,14 @@ def test_list_trajets_sort_distance_desc(client: TestClient) -> None:
     items = client.get("/api/v1/trajets?sort=-distance_km&page_size=3").json()["items"]
     distances = [item["distance_km"] for item in items]
     assert distances == sorted(distances, reverse=True)
+
+
+def test_distance_histogram_endpoint(client: TestClient) -> None:
+    data = client.get("/api/v1/trajets/distances?bin_km=100").json()
+    assert data["bin_km"] == 100
+    total = sum(b["count_jour"] + b["count_nuit"] for b in data["bins"])
+    nuit = sum(b["count_nuit"] for b in data["bins"])
+    assert total == 15  # 15 trajets train dans le seed
+    assert nuit == 3  # 3 trains de nuit
+    mins = [b["min_km"] for b in data["bins"]]
+    assert mins == sorted(mins)  # bins ordonnés

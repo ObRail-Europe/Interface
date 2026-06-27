@@ -15,6 +15,8 @@ class ExplorerClient(Protocol):
         self, filters: dict[str, Any], sort: str, page: int, page_size: int
     ) -> dict[str, Any]: ...
 
+    def get_distance_histogram(self, bin_km: int) -> dict[str, Any]: ...
+
 
 class HttpExplorerClient(BaseHttpClient):
     """Implémentation HTTP basée sur `requests`."""
@@ -28,3 +30,6 @@ class HttpExplorerClient(BaseHttpClient):
         params = [(key, value) for key, value in filters.items() if value not in (None, "")]
         params += [("sort", sort), ("page", page), ("page_size", page_size)]
         return self._get(f"/api/v1/trajets?{urlencode(params)}")
+
+    def get_distance_histogram(self, bin_km: int = 100) -> dict[str, Any]:
+        return self._get(f"/api/v1/trajets/distances?bin_km={bin_km}")

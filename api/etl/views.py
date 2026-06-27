@@ -97,11 +97,23 @@ _VIEW_DDL: dict[str, tuple[str, str]] = {
         "CREATE UNIQUE INDEX IF NOT EXISTS ix_mv_liaisons_od "
         "ON mv_liaisons (dep_citycode, arr_citycode)",
     ),
+    "mv_distance_hist": (
+        """
+        CREATE MATERIALIZED VIEW IF NOT EXISTS mv_distance_hist AS
+        SELECT
+          floor(distance_km / 25) * 25 AS bin_min,  -- bins de 25 km
+          count(*) FILTER (WHERE is_night_train IS NOT TRUE) AS count_jour,
+          count(*) FILTER (WHERE is_night_train) AS count_nuit
+        FROM trajets
+        WHERE mode = 'train' AND distance_km IS NOT NULL
+        GROUP BY floor(distance_km / 25)
+        """,
+        "CREATE UNIQUE INDEX IF NOT EXISTS ix_mv_distance_hist_bin ON mv_distance_hist (bin_min)",
+    ),
 }
 
-# Groupes par onglet (chaque migration ne gère que son groupe).
 OVERVIEW_VIEWS = ("mv_overview_kpi", "mv_operateurs", "mv_departs")
-EXPLORER_VIEWS = ("mv_liaisons",)
+EXPLORER_VIEWS = ("mv_liaisons", "mv_distance_hist")
 ALL_VIEWS = OVERVIEW_VIEWS + EXPLORER_VIEWS
 
 

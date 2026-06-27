@@ -3,8 +3,12 @@
 import math
 
 from repositories.interfaces import TrajetFilter, TrajetRepository
+from schemas.distance import DistanceBin, DistanceHistogram
 from schemas.liaison import GeoPoint, Liaison
 from schemas.trajet import TrajetListItem, TrajetPage, TripFilter
+
+# défault des bins de mv_distance_hist
+_BASE_BIN_KM = 25
 
 
 def _ratio(part: int, total: int) -> float:
@@ -48,4 +52,20 @@ class ExplorerService:
             page=page,
             page_size=page_size,
             pages=pages,
+        )
+
+    def get_distance_histogram(self, bin_km: int = 100) -> DistanceHistogram:
+        effective = max(_BASE_BIN_KM, (bin_km // _BASE_BIN_KM) * _BASE_BIN_KM)
+        bins = self._repository.distance_histogram(effective)
+        return DistanceHistogram(
+            bin_km=effective,
+            bins=[
+                DistanceBin(
+                    min_km=b.min_km,
+                    max_km=b.max_km,
+                    count_jour=b.count_jour,
+                    count_nuit=b.count_nuit,
+                )
+                for b in bins
+            ],
         )

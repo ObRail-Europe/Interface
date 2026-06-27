@@ -5,7 +5,7 @@ from typing import Any
 from dash import Dash, Input, Output, dcc, html
 
 from api.explorer_client import ExplorerClient
-from components.charts import liaisons_map
+from components.charts import distance_histogram, liaisons_map
 from components.tables import filter_controls, sort_param, trajets_table
 
 _NIGHT_TO_FILTER = {"jour": "false", "nuit": "true"}
@@ -19,6 +19,7 @@ def layout() -> html.Div:
             html.H2("Explorateur de trajets"),
             dcc.Interval(id="explorer-trigger", interval=200, max_intervals=1),
             dcc.Loading(dcc.Graph(id="liaisons-map")),
+            dcc.Loading(dcc.Graph(id="distance-hist")),
             html.H3("Trajets"),
             filter_controls(),
             trajets_table(),
@@ -29,13 +30,18 @@ def layout() -> html.Div:
 def register_callbacks(app: Dash, client: ExplorerClient) -> None:
     """Branche les callbacks de la page sur le client fourni."""
 
-    @app.callback(Output("liaisons-map", "figure"), Input("explorer-trigger", "n_intervals"))
-    def _load_liaisons(_n_intervals: int | None) -> Any:
+    @app.callback(
+        Output("liaisons-map", "figure"),
+        Output("distance-hist", "figure"),
+        Input("explorer-trigger", "n_intervals"),
+    )
+    def _load_charts(_n_intervals: int | None) -> tuple[Any, Any]:
         try:
             liaisons = client.get_liaisons(1000)
+            histogram = client.get_distance_histogram(100)
         except Exception:
-            return {}
-        return liaisons_map(liaisons)
+            return {}, {}
+        return liaisons_map(liaisons), distance_histogram(histogram)
 
     @app.callback(
         Output("trajets-table", "data"),

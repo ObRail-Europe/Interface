@@ -1,6 +1,12 @@
 """Tests des composants graphiques (fonctions pures, sans API)."""
 
-from components.charts import departs_map, jour_nuit_donut, liaisons_map, operateurs_bar
+from components.charts import (
+    departs_map,
+    distance_histogram,
+    jour_nuit_donut,
+    liaisons_map,
+    operateurs_bar,
+)
 
 
 def test_jour_nuit_donut_values() -> None:
@@ -85,3 +91,25 @@ def test_liaisons_map_empty_does_not_crash() -> None:
     fig = liaisons_map([])
     assert len(fig.data) == 3
     assert list(fig.data[0].lat) == []
+
+
+_HISTOGRAM = {
+    "bin_km": 100,
+    "bins": [
+        {"min_km": 0, "max_km": 100, "count_jour": 5, "count_nuit": 1},
+        {"min_km": 100, "max_km": 200, "count_jour": 3, "count_nuit": 2},
+    ],
+}
+
+
+def test_distance_histogram_is_stacked_jour_nuit() -> None:
+    fig = distance_histogram(_HISTOGRAM)
+    assert len(fig.data) == 2  # jour + nuit
+    assert fig.layout.barmode == "stack"
+    assert list(fig.data[0].y) == [5, 3]  # jour
+    assert list(fig.data[1].y) == [1, 2]  # nuit
+
+
+def test_distance_histogram_empty_does_not_crash() -> None:
+    fig = distance_histogram({"bin_km": 100, "bins": []})
+    assert len(fig.data) == 2

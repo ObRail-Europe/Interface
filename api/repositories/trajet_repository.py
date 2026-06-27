@@ -4,7 +4,18 @@ from sqlalchemy import Select, func, select, text
 from sqlalchemy.orm import Session
 
 from models import Trajet
-from repositories.interfaces import LiaisonAggregate, TrajetFilter
+from repositories.interfaces import DistanceBinAggregate, LiaisonAggregate, TrajetFilter
+
+# Re-regroupe les bins de 25 km de mv_distance_hist selon le pas demandé.
+_DISTANCE_HIST_SQL = text("""
+SELECT floor(bin_min / :bin) * :bin AS min_km,
+       floor(bin_min / :bin) * :bin + :bin AS max_km,
+       sum(count_jour)::bigint AS count_jour,
+       sum(count_nuit)::bigint AS count_nuit
+FROM mv_distance_hist
+GROUP BY 1, 2
+ORDER BY min_km
+""")
 
 # Lecture de la vue matérialisée des liaisons (cf. etl/views.py).
 _LIAISONS_SQL = text("""
@@ -89,3 +100,15 @@ class SqlAlchemyTrajetRepository:
         stmt = stmt.order_by(column.desc() if sort_desc else column.asc())
         stmt = stmt.offset((page - 1) * page_size).limit(page_size)
         return list(self._session.scalars(stmt).all()), total
+
+    def distance_histogram(self, bin_km: int) -> list[DistanceBinAggregate]:
+        rows = self._session.execute(_DISTANCE_HIST_SQL, {"bin": bin_km}).mappings().all()
+        return [
+            DistanceBinAggregate(
+                min_km=row["min_km"],
+                max_km=row["max_km"],
+                count_jour=row["count_jour"],
+                count_nuit=row["count_nuit"],
+            )
+            for row in rows
+        ]
