@@ -217,6 +217,34 @@ def carbon_density_scatter(density: dict[str, Any]) -> go.Figure:
     return fig
 
 
+def co2_distribution_box(distribution: dict[str, Any]) -> go.Figure:
+    """Box plot du CO₂/pkm par mode (V5.3), à partir des quartiles précalculés."""
+    colors = {"train": COLOR_TRAIN, "flight": COLOR_AVION}
+    labels = {"train": "Train", "flight": "Avion"}
+    fig = go.Figure()
+    for mode in distribution["modes"]:
+        key = mode["mode"]
+        fig.add_trace(
+            go.Box(
+                name=labels.get(key, key),
+                q1=[mode["q1"]],
+                median=[mode["mediane"]],
+                q3=[mode["q3"]],
+                lowerfence=[mode["min"]],
+                upperfence=[mode["max"]],
+                mean=[mode["moyenne"]],
+                marker_color=colors.get(key),
+            )
+        )
+    fig.update_layout(
+        title="Distribution du CO₂/pkm par mode",
+        yaxis_title="CO₂ (g/pkm)",
+        margin=_MARGIN,
+        showlegend=False,
+    )
+    return fig
+
+
 def distance_histogram(histogram: dict[str, Any]) -> go.Figure:
     """Histogramme empilé des distances (V2.3), réparti jour/nuit."""
     bins = histogram["bins"]

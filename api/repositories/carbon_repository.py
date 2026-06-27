@@ -3,7 +3,11 @@
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from repositories.interfaces import CarbonDensityCell, Co2BandAggregate
+from repositories.interfaces import (
+    CarbonDensityCell,
+    Co2BandAggregate,
+    ModeDistributionAggregate,
+)
 
 # Largeur des tranches de distance de mv_co2_comparaison
 _BAND_KM = 50.0
@@ -19,6 +23,12 @@ _DENSITY_SQL = text("""
 SELECT mode, dist_min, co2_min, nb_trajets
 FROM mv_carbon_density
 ORDER BY mode, dist_min, co2_min
+""")
+
+_DISTRIBUTION_SQL = text("""
+SELECT mode, nb_trajets, co2_min, co2_q1, co2_median, co2_q3, co2_max, co2_moy
+FROM mv_co2_distribution
+ORDER BY mode
 """)
 
 
@@ -49,6 +59,22 @@ class SqlAlchemyCarbonRepository:
                 x_km=float(row["dist_min"]),
                 y_co2_pkm=float(row["co2_min"]),
                 count=row["nb_trajets"],
+            )
+            for row in rows
+        ]
+
+    def co2_distribution(self) -> list[ModeDistributionAggregate]:
+        rows = self._session.execute(_DISTRIBUTION_SQL).mappings().all()
+        return [
+            ModeDistributionAggregate(
+                mode=row["mode"],
+                count=row["nb_trajets"],
+                co2_min=float(row["co2_min"]),
+                co2_q1=float(row["co2_q1"]),
+                co2_median=float(row["co2_median"]),
+                co2_q3=float(row["co2_q3"]),
+                co2_max=float(row["co2_max"]),
+                co2_moy=float(row["co2_moy"]),
             )
             for row in rows
         ]

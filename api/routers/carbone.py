@@ -5,7 +5,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query
 
 from dependencies import get_carbon_service
-from schemas.carbon import ComparaisonAvion, ScatterDensity
+from schemas.carbon import Co2ParMode, ComparaisonAvion, ScatterDensity
 from services.carbon_service import CarbonService
 
 router = APIRouter(prefix="/api/v1/stats/co2", tags=["carbone"])
@@ -24,3 +24,8 @@ def get_comparaison_avion(
 @router.get("/scatter", response_model=ScatterDensity, summary="Densité distance × intensité")
 def get_scatter(service: ServiceDep) -> ScatterDensity:
     return service.get_density()
+
+
+@router.get("/par-mode", response_model=Co2ParMode, summary="Distribution du CO₂/pkm par mode")
+def get_par_mode(service: ServiceDep) -> Co2ParMode:
+    return service.get_distribution()

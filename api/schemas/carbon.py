@@ -40,3 +40,22 @@ class ScatterDensity(BaseModel):
     """V5.2 — densité distance × intensité carbone (agrégée, colorée par mode)."""
 
     bins: list[ScatterBin]
+
+
+class ModeDistribution(BaseModel):
+    """Résumé statistique du CO₂/pkm d'un mode (box plot : quartiles + extrêmes)."""
+
+    mode: str
+    count: int
+    min: float
+    q1: float
+    mediane: float
+    q3: float
+    max: float
+    moyenne: float
+
+
+class Co2ParMode(BaseModel):
+    """V5.3 — distribution du CO₂/pkm par mode (train vs avion)."""
+
+    modes: list[ModeDistribution]

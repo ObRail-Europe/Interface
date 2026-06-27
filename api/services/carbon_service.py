@@ -1,7 +1,14 @@
 """Cas d'usage de l'onglet « Empreinte carbone » (train vs avion)."""
 
 from repositories.interfaces import CarbonRepository
-from schemas.carbon import Co2Tranche, ComparaisonAvion, ScatterBin, ScatterDensity
+from schemas.carbon import (
+    Co2ParMode,
+    Co2Tranche,
+    ComparaisonAvion,
+    ModeDistribution,
+    ScatterBin,
+    ScatterDensity,
+)
 
 _GRAMMES_PAR_TONNE = 1_000_000
 
@@ -58,5 +65,23 @@ class CarbonService:
                     count=cell.count,
                 )
                 for cell in self._repository.carbon_density()
+            ]
+        )
+
+    def get_distribution(self) -> Co2ParMode:
+        """V5.3 — distribution du CO₂/pkm par mode (quartiles + extrêmes, box plot)."""
+        return Co2ParMode(
+            modes=[
+                ModeDistribution(
+                    mode=stat.mode,
+                    count=stat.count,
+                    min=stat.co2_min,
+                    q1=stat.co2_q1,
+                    mediane=stat.co2_median,
+                    q3=stat.co2_q3,
+                    max=stat.co2_max,
+                    moyenne=stat.co2_moy,
+                )
+                for stat in self._repository.co2_distribution()
             ]
         )

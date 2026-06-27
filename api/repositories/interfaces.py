@@ -145,9 +145,25 @@ class CarbonDensityCell:
     count: int
 
 
+@dataclass(frozen=True)
+class ModeDistributionAggregate:
+    """Quartiles et extrêmes du CO₂/pkm d'un mode (box plot)."""
+
+    mode: str
+    count: int
+    co2_min: float
+    co2_q1: float
+    co2_median: float
+    co2_q3: float
+    co2_max: float
+    co2_moy: float
+
+
 class CarbonRepository(Protocol):
     """Accès aux agrégats carbone (train vs avion) des vues matérialisées."""
 
     def comparaison_bands(self) -> list[Co2BandAggregate]: ...
 
     def carbon_density(self) -> list[CarbonDensityCell]: ...
+
+    def co2_distribution(self) -> list[ModeDistributionAggregate]: ...

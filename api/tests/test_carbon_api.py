@@ -34,3 +34,13 @@ def test_scatter_endpoint(carbon_client: TestClient) -> None:
     assert modes == {"train", "flight"}  # les deux modes du seed carbone
     sample = bins[0]
     assert {"x_km", "y_co2_pkm", "mode", "count"} <= sample.keys()
+
+
+def test_par_mode_endpoint(carbon_client: TestClient) -> None:
+    modes = carbon_client.get("/api/v1/stats/co2/par-mode").json()["modes"]
+    by_mode = {m["mode"]: m for m in modes}
+    assert set(by_mode) == {"train", "flight"}
+    train, flight = by_mode["train"], by_mode["flight"]
+    # Quartiles ordonnés et le train nettement moins intense que l'avion.
+    assert train["min"] <= train["q1"] <= train["mediane"] <= train["q3"] <= train["max"]
+    assert train["mediane"] < flight["mediane"]

@@ -6,7 +6,11 @@ from dash import Dash, Input, Output, dcc, html
 
 from api.carbon_client import CarbonClient
 from components.carbon import co2_counter
-from components.charts import carbon_density_scatter, comparaison_avion_bars
+from components.charts import (
+    carbon_density_scatter,
+    co2_distribution_box,
+    comparaison_avion_bars,
+)
 
 
 def layout() -> html.Div:
@@ -19,6 +23,7 @@ def layout() -> html.Div:
             dcc.Loading(html.Div(id="co2-counter")),
             dcc.Loading(dcc.Graph(id="co2-comparaison")),
             dcc.Loading(dcc.Graph(id="co2-density")),
+            dcc.Loading(dcc.Graph(id="co2-distribution")),
         ],
     )
 
@@ -48,3 +53,14 @@ def register_callbacks(app: Dash, client: CarbonClient) -> None:
         except Exception:
             return {}
         return carbon_density_scatter(density)
+
+    @app.callback(
+        Output("co2-distribution", "figure"),
+        Input("carbon-trigger", "n_intervals"),
+    )
+    def _load_distribution(_n_intervals: int | None) -> Any:
+        try:
+            distribution = client.get_distribution()
+        except Exception:
+            return {}
+        return co2_distribution_box(distribution)

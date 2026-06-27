@@ -2,6 +2,7 @@
 
 from components.charts import (
     carbon_density_scatter,
+    co2_distribution_box,
     comparaison_avion_bars,
     departs_map,
     distance_histogram,
@@ -164,3 +165,42 @@ def test_carbon_density_scatter_one_trace_per_mode() -> None:
 def test_carbon_density_scatter_empty_does_not_crash() -> None:
     fig = carbon_density_scatter({"bins": []})
     assert len(fig.data) == 2
+
+
+_DISTRIBUTION = {
+    "modes": [
+        {
+            "mode": "train",
+            "count": 100,
+            "min": 1.0,
+            "q1": 2.0,
+            "mediane": 3.0,
+            "q3": 4.0,
+            "max": 30.0,
+            "moyenne": 3.5,
+        },
+        {
+            "mode": "flight",
+            "count": 80,
+            "min": 150.0,
+            "q1": 200.0,
+            "mediane": 250.0,
+            "q3": 300.0,
+            "max": 356.0,
+            "moyenne": 251.0,
+        },
+    ]
+}
+
+
+def test_co2_distribution_box_one_box_per_mode() -> None:
+    fig = co2_distribution_box(_DISTRIBUTION)
+    assert len(fig.data) == 2  # un box par mode
+    train = fig.data[0]
+    assert train.name == "Train"
+    assert list(train.median) == [3.0]
+    assert list(train.q1) == [2.0] and list(train.q3) == [4.0]
+
+
+def test_co2_distribution_box_empty_does_not_crash() -> None:
+    assert len(co2_distribution_box({"modes": []}).data) == 0

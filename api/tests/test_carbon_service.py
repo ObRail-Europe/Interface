@@ -1,6 +1,10 @@
 """Tests unitaires du service Empreinte carbone (repository en mémoire, sans base)."""
 
-from repositories.interfaces import CarbonDensityCell, Co2BandAggregate
+from repositories.interfaces import (
+    CarbonDensityCell,
+    Co2BandAggregate,
+    ModeDistributionAggregate,
+)
 from services.carbon_service import CarbonService
 
 
@@ -11,15 +15,20 @@ class FakeCarbonRepository:
         self,
         bands: list[Co2BandAggregate] | None = None,
         density: list[CarbonDensityCell] | None = None,
+        distribution: list[ModeDistributionAggregate] | None = None,
     ) -> None:
         self._bands = bands or []
         self._density = density or []
+        self._distribution = distribution or []
 
     def comparaison_bands(self) -> list[Co2BandAggregate]:
         return self._bands
 
     def carbon_density(self) -> list[CarbonDensityCell]:
         return self._density
+
+    def co2_distribution(self) -> list[ModeDistributionAggregate]:
+        return self._distribution
 
 
 def test_get_comparaison_applies_factor_and_totals() -> None:
@@ -63,3 +72,18 @@ def test_get_density_maps_cells_per_mode() -> None:
     assert {b.mode for b in density.bins} == {"train", "flight"}
     train = next(b for b in density.bins if b.mode == "train")
     assert train.x_km == 0.0 and train.y_co2_pkm == 20.0 and train.count == 8
+
+
+def test_get_distribution_maps_quartiles_per_mode() -> None:
+    repo = FakeCarbonRepository(
+        distribution=[
+            ModeDistributionAggregate("train", 100, 1.0, 2.0, 3.0, 4.0, 30.0, 3.5),
+            ModeDistributionAggregate("flight", 80, 150.0, 200.0, 250.0, 300.0, 356.0, 251.0),
+        ]
+    )
+    dist = CarbonService(repo).get_distribution()
+
+    assert len(dist.modes) == 2
+    train = next(m for m in dist.modes if m.mode == "train")
+    assert train.mediane == 3.0  # co2_median → mediane
+    assert train.min == 1.0 and train.max == 30.0 and train.moyenne == 3.5

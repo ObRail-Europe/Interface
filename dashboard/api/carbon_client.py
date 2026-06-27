@@ -16,6 +16,8 @@ class CarbonClient(Protocol):
 
     def get_density(self) -> dict[str, Any]: ...
 
+    def get_distribution(self) -> dict[str, Any]: ...
+
 
 class HttpCarbonClient(BaseHttpClient):
     """Implémentation HTTP basée sur `requests`."""
@@ -28,3 +30,6 @@ class HttpCarbonClient(BaseHttpClient):
 
     def get_density(self) -> dict[str, Any]:
         return self._get("/api/v1/stats/co2/scatter")
+
+    def get_distribution(self) -> dict[str, Any]:
+        return self._get("/api/v1/stats/co2/par-mode")
