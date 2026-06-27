@@ -9,8 +9,9 @@ from dash import Dash, dcc, html
 from api.carbon_client import HttpCarbonClient
 from api.explorer_client import HttpExplorerClient
 from api.overview_client import HttpOverviewClient
+from api.territoire_client import HttpTerritoireClient
 from config import settings
-from pages import carbon, explorer, overview
+from pages import carbon, explorer, overview, territoires
 
 
 def create_app() -> Dash:
@@ -21,6 +22,7 @@ def create_app() -> Dash:
     overview_client = HttpOverviewClient(settings.api_url)
     explorer_client = HttpExplorerClient(settings.api_url)
     carbon_client = HttpCarbonClient(settings.api_url)
+    territoire_client = HttpTerritoireClient(settings.api_url)
 
     app.layout = html.Div(
         className="app",
@@ -41,6 +43,11 @@ def create_app() -> Dash:
                         value="carbon",
                         children=carbon.layout(),
                     ),
+                    dcc.Tab(
+                        label="Territoires & couverture",
+                        value="territoires",
+                        children=territoires.layout(),
+                    ),
                 ],
             ),
         ],
@@ -48,6 +55,7 @@ def create_app() -> Dash:
     overview.register_callbacks(app, overview_client)
     explorer.register_callbacks(app, explorer_client)
     carbon.register_callbacks(app, carbon_client)
+    territoires.register_callbacks(app, territoire_client)
     return app
 
 

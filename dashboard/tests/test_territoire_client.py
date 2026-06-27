@@ -1,0 +1,26 @@
+"""Test du client territoires : construction de la requête carte."""
+
+from typing import Any
+
+import pytest
+
+from api.territoire_client import HttpTerritoireClient
+
+
+def test_get_carte_builds_query(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured: dict[str, str] = {}
+
+    def fake_get(self: HttpTerritoireClient, path: str) -> list[Any]:
+        captured["path"] = path
+        return []
+
+    monkeypatch.setattr(HttpTerritoireClient, "_get", fake_get)
+    client = HttpTerritoireClient("http://api")
+    client.get_carte("has_gare", code_dept="75", has_gare=True)
+
+    path = captured["path"]
+    assert path.startswith("/api/v1/villes/carte?")
+    assert "dimension=has_gare" in path
+    assert "code_dept=75" in path
+    assert "code_region" not in path  # None écarté
+    assert "has_gare=true" in path

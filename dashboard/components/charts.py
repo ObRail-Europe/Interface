@@ -1,4 +1,4 @@
-"""Composants graphiques de l'onglet Vue d'ensemble (fonctions pures → figure Plotly)."""
+"""Composants graphiques du dashboard (fonctions pures → figure Plotly)."""
 
 from typing import Any
 
@@ -7,6 +7,13 @@ import plotly.graph_objects as go
 from theme import COLOR_AVION, COLOR_JOUR, COLOR_NUIT, COLOR_TRAIN
 
 _MARGIN = {"t": 50, "b": 10, "l": 10, "r": 10}
+
+_GEO_EUROPE = {
+    "scope": "europe",
+    "center": {"lat": 46.6, "lon": 2.4},
+    "projection_scale": 4.5,
+    "showcountries": True,
+}
 
 
 def jour_nuit_donut(split: dict[str, Any]) -> go.Figure:
@@ -265,5 +272,37 @@ def distance_histogram(histogram: dict[str, Any]) -> go.Figure:
         yaxis_title="Trajets",
         margin=_MARGIN,
         legend={"orientation": "h"},
+    )
+    return fig
+
+
+def couverture_map(points: list[dict[str, Any]], dimension_label: str) -> go.Figure:
+    """Carte de la couverture ferroviaire (V6.1) : couleur = dimension, taille ∝ population."""
+    pops = [point["population"] or 0 for point in points]
+    max_pop = max(pops) if pops else 1
+    fig = go.Figure(
+        go.Scattergeo(
+            lat=[point["geo"]["lat"] for point in points],
+            lon=[point["geo"]["lon"] for point in points],
+            text=[
+                f"{point['city_name']} — {dimension_label} : {point['valeur'] / 1000:.2f}" for point in points
+            ],
+            hoverinfo="text",
+            marker={
+                "color": [point["valeur"] / 1000 for point in points],
+                "colorscale": "Viridis",
+                "showscale": True,
+                "colorbar": {"title": dimension_label},
+                "size": pops,
+                "sizemode": "area",
+                "sizeref": 2 * max_pop / (30**2),
+                "sizemin": 3,
+            },
+        )
+    )
+    fig.update_layout(
+        title="Couverture ferroviaire des communes",
+        geo=_GEO_EUROPE,
+        margin=_MARGIN,
     )
     return fig

@@ -167,3 +167,33 @@ class CarbonRepository(Protocol):
     def carbon_density(self) -> list[CarbonDensityCell]: ...
 
     def co2_distribution(self) -> list[ModeDistributionAggregate]: ...
+
+
+@dataclass(frozen=True)
+class VilleGeoAggregate:
+    """Commune géolocalisée et la valeur de la dimension cartographiée."""
+
+    citycode: str
+    city_name: str
+    lat: float
+    lon: float
+    population: float | None
+    valeur: float | None
+    has_gare: bool | None
+
+
+class TerritoireRepository(Protocol):
+    """Accès aux données de l'onglet « Territoires & couverture ».
+
+    La source est la table `villes` (~10k lignes, colonnes pré-calculées) : les lectures
+    sont directes - pas de vue matérialisée (sur-dimensionnée ici), et les colonnes
+    filtrées (`code_dept`, `code_region`, `has_gare`) sont déjà indexées au schéma.
+    """
+
+    def villes_carte(
+        self,
+        dimension: str,
+        code_dept: str | None,
+        code_region: str | None,
+        has_gare: bool | None,
+    ) -> list[VilleGeoAggregate]: ...
