@@ -1,6 +1,7 @@
 """Tests des composants graphiques (fonctions pures, sans API)."""
 
 from components.charts import (
+    carbon_density_scatter,
     comparaison_avion_bars,
     departs_map,
     distance_histogram,
@@ -139,4 +140,27 @@ def test_comparaison_avion_bars_groups_train_and_avion() -> None:
 
 def test_comparaison_avion_bars_empty_does_not_crash() -> None:
     fig = comparaison_avion_bars({**_COMPARAISON, "par_tranche": []})
+    assert len(fig.data) == 2
+
+
+_DENSITY = {
+    "bins": [
+        {"x_km": 0.0, "y_co2_pkm": 20.0, "mode": "train", "count": 8},
+        {"x_km": 50.0, "y_co2_pkm": 20.0, "mode": "train", "count": 4},
+        {"x_km": 650.0, "y_co2_pkm": 250.0, "mode": "flight", "count": 3},
+    ]
+}
+
+
+def test_carbon_density_scatter_one_trace_per_mode() -> None:
+    fig = carbon_density_scatter(_DENSITY)
+    assert len(fig.data) == 2  # train + avion
+    train, avion = fig.data[0], fig.data[1]
+    assert train.name == "Train"
+    assert list(train.x) == [0.0, 50.0]  # 2 cellules train
+    assert list(avion.y) == [250.0]  # 1 cellule avion
+
+
+def test_carbon_density_scatter_empty_does_not_crash() -> None:
+    fig = carbon_density_scatter({"bins": []})
     assert len(fig.data) == 2

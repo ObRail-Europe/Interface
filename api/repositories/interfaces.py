@@ -135,7 +135,19 @@ class Co2BandAggregate:
     train_emissions_g: float
 
 
+@dataclass(frozen=True)
+class CarbonDensityCell:
+    """Cellule d'histogramme 2D (distance × intensité carbone) d'un mode."""
+
+    mode: str
+    x_km: float  # borne basse du bin de distance
+    y_co2_pkm: float  # borne basse du bin d'intensité (g/pkm)
+    count: int
+
+
 class CarbonRepository(Protocol):
     """Accès aux agrégats carbone (train vs avion) des vues matérialisées."""
 
     def comparaison_bands(self) -> list[Co2BandAggregate]: ...
+
+    def carbon_density(self) -> list[CarbonDensityCell]: ...

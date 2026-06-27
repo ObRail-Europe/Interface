@@ -24,3 +24,13 @@ def test_comparaison_avion_factor_is_parameterizable(carbon_client: TestClient) 
     # Doubler le facteur double l'estimation avion (le train réel ne bouge pas).
     assert doubled["co2_avion_estime_t"] == base["co2_avion_estime_t"] * 2
     assert doubled["co2_train_total_t"] == base["co2_train_total_t"]
+
+
+def test_scatter_endpoint(carbon_client: TestClient) -> None:
+    data = carbon_client.get("/api/v1/stats/co2/scatter").json()
+    bins = data["bins"]
+    assert bins  # cellules de densité précalculées
+    modes = {b["mode"] for b in bins}
+    assert modes == {"train", "flight"}  # les deux modes du seed carbone
+    sample = bins[0]
+    assert {"x_km", "y_co2_pkm", "mode", "count"} <= sample.keys()

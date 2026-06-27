@@ -177,6 +177,46 @@ def comparaison_avion_bars(comparaison: dict[str, Any]) -> go.Figure:
     return fig
 
 
+def carbon_density_scatter(density: dict[str, Any]) -> go.Figure:
+    """Densité distance × intensité carbone (V5.2) : une bulle par cellule, colorée par mode.
+
+    La taille des bulles encode le nombre de trajets ; les deux modes forment des nuages
+    distincts (le train à basse intensité, l'avion bien plus haut).
+    """
+    bins = density["bins"]
+    max_count = max((b["count"] for b in bins), default=1)
+    fig = go.Figure()
+    for mode, color, label in (("train", COLOR_TRAIN, "Train"), ("flight", COLOR_AVION, "Avion")):
+        cells = [b for b in bins if b["mode"] == mode]
+        hover = f"{label} — %{{x}} km · %{{y}} g/pkm : %{{customdata}} trajets<extra></extra>"
+        fig.add_trace(
+            go.Scatter(
+                x=[c["x_km"] for c in cells],
+                y=[c["y_co2_pkm"] for c in cells],
+                customdata=[c["count"] for c in cells],
+                mode="markers",
+                name=label,
+                marker={
+                    "color": color,
+                    "size": [c["count"] for c in cells],
+                    "sizemode": "area",
+                    "sizeref": 2 * max_count / (30**2),
+                    "sizemin": 3,
+                    "opacity": 0.5,
+                },
+                hovertemplate=hover,
+            )
+        )
+    fig.update_layout(
+        title="Distance × intensité carbone (densité)",
+        xaxis_title="Distance (km)",
+        yaxis_title="CO₂ (g/pkm)",
+        margin=_MARGIN,
+        legend={"orientation": "h"},
+    )
+    return fig
+
+
 def distance_histogram(histogram: dict[str, Any]) -> go.Figure:
     """Histogramme empilé des distances (V2.3), réparti jour/nuit."""
     bins = histogram["bins"]

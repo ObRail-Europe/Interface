@@ -6,7 +6,7 @@ from dash import Dash, Input, Output, dcc, html
 
 from api.carbon_client import CarbonClient
 from components.carbon import co2_counter
-from components.charts import comparaison_avion_bars
+from components.charts import carbon_density_scatter, comparaison_avion_bars
 
 
 def layout() -> html.Div:
@@ -18,6 +18,7 @@ def layout() -> html.Div:
             dcc.Interval(id="carbon-trigger", interval=200, max_intervals=1),
             dcc.Loading(html.Div(id="co2-counter")),
             dcc.Loading(dcc.Graph(id="co2-comparaison")),
+            dcc.Loading(dcc.Graph(id="co2-density")),
         ],
     )
 
@@ -36,3 +37,14 @@ def register_callbacks(app: Dash, client: CarbonClient) -> None:
         except Exception as exc:
             return html.Div(f"Données indisponibles : {exc}", className="error"), {}
         return co2_counter(comparaison), comparaison_avion_bars(comparaison)
+
+    @app.callback(
+        Output("co2-density", "figure"),
+        Input("carbon-trigger", "n_intervals"),
+    )
+    def _load_density(_n_intervals: int | None) -> Any:
+        try:
+            density = client.get_density()
+        except Exception:
+            return {}
+        return carbon_density_scatter(density)

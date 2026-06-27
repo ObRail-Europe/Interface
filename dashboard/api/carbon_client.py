@@ -14,6 +14,8 @@ class CarbonClient(Protocol):
 
     def get_comparaison(self, facteur_avion_g_par_pkm: float | None = None) -> dict[str, Any]: ...
 
+    def get_density(self) -> dict[str, Any]: ...
+
 
 class HttpCarbonClient(BaseHttpClient):
     """Implémentation HTTP basée sur `requests`."""
@@ -23,3 +25,6 @@ class HttpCarbonClient(BaseHttpClient):
         if facteur_avion_g_par_pkm is not None:
             path += f"?facteur_avion_g_par_pkm={facteur_avion_g_par_pkm}"
         return self._get(path)
+
+    def get_density(self) -> dict[str, Any]:
+        return self._get("/api/v1/stats/co2/scatter")

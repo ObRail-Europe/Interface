@@ -1,7 +1,7 @@
 """Cas d'usage de l'onglet « Empreinte carbone » (train vs avion)."""
 
 from repositories.interfaces import CarbonRepository
-from schemas.carbon import Co2Tranche, ComparaisonAvion
+from schemas.carbon import Co2Tranche, ComparaisonAvion, ScatterBin, ScatterDensity
 
 _GRAMMES_PAR_TONNE = 1_000_000
 
@@ -45,4 +45,18 @@ class CarbonService:
             co2_avion_estime_t=avion_total_g / _GRAMMES_PAR_TONNE,
             co2_evite_t=(avion_total_g - train_total_g) / _GRAMMES_PAR_TONNE,
             par_tranche=tranches,
+        )
+
+    def get_density(self) -> ScatterDensity:
+        """V5.2 — densité distance × intensité carbone, précalculée et colorée par mode."""
+        return ScatterDensity(
+            bins=[
+                ScatterBin(
+                    x_km=cell.x_km,
+                    y_co2_pkm=cell.y_co2_pkm,
+                    mode=cell.mode,
+                    count=cell.count,
+                )
+                for cell in self._repository.carbon_density()
+            ]
         )

@@ -25,3 +25,18 @@ class ComparaisonAvion(BaseModel):
     co2_avion_estime_t: float
     co2_evite_t: float
     par_tranche: list[Co2Tranche]
+
+
+class ScatterBin(BaseModel):
+    """Cellule de densité (distance × intensité carbone) pour un mode."""
+
+    x_km: float  # borne basse du bin de distance
+    y_co2_pkm: float  # borne basse du bin d'intensité (g/pkm)
+    mode: str
+    count: int
+
+
+class ScatterDensity(BaseModel):
+    """V5.2 — densité distance × intensité carbone (agrégée, colorée par mode)."""
+
+    bins: list[ScatterBin]

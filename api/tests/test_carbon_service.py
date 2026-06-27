@@ -1,17 +1,25 @@
 """Tests unitaires du service Empreinte carbone (repository en mémoire, sans base)."""
 
-from repositories.interfaces import Co2BandAggregate
+from repositories.interfaces import CarbonDensityCell, Co2BandAggregate
 from services.carbon_service import CarbonService
 
 
 class FakeCarbonRepository:
     """Doublure en mémoire de `CarbonRepository`."""
 
-    def __init__(self, bands: list[Co2BandAggregate]) -> None:
-        self._bands = bands
+    def __init__(
+        self,
+        bands: list[Co2BandAggregate] | None = None,
+        density: list[CarbonDensityCell] | None = None,
+    ) -> None:
+        self._bands = bands or []
+        self._density = density or []
 
     def comparaison_bands(self) -> list[Co2BandAggregate]:
         return self._bands
+
+    def carbon_density(self) -> list[CarbonDensityCell]:
+        return self._density
 
 
 def test_get_comparaison_applies_factor_and_totals() -> None:
@@ -40,3 +48,18 @@ def test_get_comparaison_uses_documented_default_factor() -> None:
 
     assert comp.facteur_avion_g_par_pkm == 230.0  # défaut documenté
     assert comp.co2_avion_estime_t > comp.co2_train_total_t
+
+
+def test_get_density_maps_cells_per_mode() -> None:
+    repo = FakeCarbonRepository(
+        density=[
+            CarbonDensityCell(mode="train", x_km=0.0, y_co2_pkm=20.0, count=8),
+            CarbonDensityCell(mode="flight", x_km=650.0, y_co2_pkm=250.0, count=3),
+        ]
+    )
+    density = CarbonService(repo).get_density()
+
+    assert len(density.bins) == 2
+    assert {b.mode for b in density.bins} == {"train", "flight"}
+    train = next(b for b in density.bins if b.mode == "train")
+    assert train.x_km == 0.0 and train.y_co2_pkm == 20.0 and train.count == 8
