@@ -19,3 +19,29 @@ def test_liaisons_endpoint(client: TestClient) -> None:
 
 def test_liaisons_endpoint_respects_limit(client: TestClient) -> None:
     assert len(client.get("/api/v1/trajets/liaisons?limit=3").json()) == 3
+
+
+def test_list_trajets_default(client: TestClient) -> None:
+    data = client.get("/api/v1/trajets").json()
+    assert data["total"] == 15  # 15 trajets dans le seed
+    assert data["page"] == 1
+    assert len(data["items"]) == 15  # page_size 50 par défaut
+    assert "trip_id" in data["items"][0]
+
+
+def test_list_trajets_filter_night(client: TestClient) -> None:
+    data = client.get("/api/v1/trajets?is_night=true").json()
+    assert data["total"] == 3  # 3 trains de nuit
+    assert all(item["is_night_train"] for item in data["items"])
+
+
+def test_list_trajets_pagination(client: TestClient) -> None:
+    data = client.get("/api/v1/trajets?page_size=5").json()
+    assert len(data["items"]) == 5
+    assert data["pages"] == 3  # ceil(15 / 5)
+
+
+def test_list_trajets_sort_distance_desc(client: TestClient) -> None:
+    items = client.get("/api/v1/trajets?sort=-distance_km&page_size=3").json()["items"]
+    distances = [item["distance_km"] for item in items]
+    assert distances == sorted(distances, reverse=True)

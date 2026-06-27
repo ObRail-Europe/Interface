@@ -6,6 +6,8 @@ Les services dépendent de ces `Protocol`, pas de SQLAlchemy
 from dataclasses import dataclass
 from typing import Protocol
 
+from models import Trajet
+
 
 @dataclass(frozen=True)
 class OverviewAggregates:
@@ -78,7 +80,31 @@ class LiaisonAggregate:
     co2_moy_par_pkm: float | None
 
 
+@dataclass(frozen=True)
+class TrajetFilter:
+    """Critères de filtrage de la table des trajets (couche domaine)."""
+
+    mode: str | None = None
+    is_night: bool | None = None
+    departure_city: str | None = None
+    arrival_city: str | None = None
+    agency_name: str | None = None
+    departure_country: str | None = None
+    arrival_country: str | None = None
+    distance_min_km: float | None = None
+    distance_max_km: float | None = None
+
+
 class TrajetRepository(Protocol):
     """Accès aux trajets de l'onglet « Explorateur de trajets »."""
 
     def top_liaisons(self, limit: int) -> list[LiaisonAggregate]: ...
+
+    def list_trajets(
+        self,
+        criteria: TrajetFilter,
+        sort_field: str,
+        sort_desc: bool,
+        page: int,
+        page_size: int,
+    ) -> tuple[list[Trajet], int]: ...

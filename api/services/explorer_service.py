@@ -1,7 +1,10 @@
 """Cas d'usage de l'onglet « Explorateur de trajets »."""
 
-from repositories.interfaces import TrajetRepository
+import math
+
+from repositories.interfaces import TrajetFilter, TrajetRepository
 from schemas.liaison import GeoPoint, Liaison
+from schemas.trajet import TrajetListItem, TrajetPage, TripFilter
 
 
 def _ratio(part: int, total: int) -> float:
@@ -28,3 +31,21 @@ class ExplorerService:
             )
             for liaison in self._repository.top_liaisons(limit)
         ]
+
+    def list_trajets(
+        self, trip_filter: TripFilter, sort: str, page: int, page_size: int
+    ) -> TrajetPage:
+        sort_desc = sort.startswith("-")
+        sort_field = sort.lstrip("-") or "id"
+        criteria = TrajetFilter(**trip_filter.model_dump())
+        rows, total = self._repository.list_trajets(
+            criteria, sort_field, sort_desc, page, page_size
+        )
+        pages = math.ceil(total / page_size) if page_size else 0
+        return TrajetPage(
+            items=[TrajetListItem.model_validate(row) for row in rows],
+            total=total,
+            page=page,
+            page_size=page_size,
+            pages=pages,
+        )
