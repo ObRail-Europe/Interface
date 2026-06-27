@@ -87,7 +87,9 @@ _VIEW_DDL: dict[str, tuple[str, str]] = {
         FROM trajets t
         JOIN villes dv ON dv.citycode = t.departure_citycode
         JOIN villes av ON av.citycode = t.arrival_citycode
-        WHERE dv.lat_insee IS NOT NULL AND dv.lon_insee IS NOT NULL
+        WHERE t.mode = 'train'  -- exclut les vols
+          AND dv.citycode <> av.citycode  -- exclus les boucles
+          AND dv.lat_insee IS NOT NULL AND dv.lon_insee IS NOT NULL
           AND av.lat_insee IS NOT NULL AND av.lon_insee IS NOT NULL
         GROUP BY dv.citycode, dv.city_name, dv.lat_insee, dv.lon_insee,
                  av.citycode, av.city_name, av.lat_insee, av.lon_insee

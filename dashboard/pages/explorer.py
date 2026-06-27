@@ -26,7 +26,7 @@ def register_callbacks(app: Dash, client: ExplorerClient) -> None:
     @app.callback(Output("liaisons-map", "figure"), Input("explorer-trigger", "n_intervals"))
     def _load_liaisons(_n_intervals: int | None) -> Any:
         try:
-            liaisons = client.get_liaisons(100)
+            liaisons = client.get_liaisons(1000)
         except Exception:
             return {}
         return liaisons_map(liaisons)

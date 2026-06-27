@@ -67,11 +67,21 @@ _LIAISONS = [
 ]
 
 
-def test_liaisons_map_one_trace_per_liaison() -> None:
+def test_liaisons_map_groups_jour_nuit() -> None:
+    # _LIAISONS : Paris→Lyon (part_nuit 0 → jour), Lyon→Marseille (part_nuit 1 → nuit)
     fig = liaisons_map(_LIAISONS)
-    assert len(fig.data) == 2
-    assert list(fig.data[0].lat) == [48.85, 45.76]  # arc Paris→Lyon
+    assert len(fig.data) == 3  # lignes jour, lignes nuit, points de survol
+    assert list(fig.data[0].lat) == [48.85, 45.76, None]  # arc jour Paris→Lyon
+    assert list(fig.data[1].lat) == [45.76, 43.3, None]  # arc nuit Lyon→Marseille
+
+
+def test_liaisons_map_hover_shows_od_and_count() -> None:
+    hover = liaisons_map(_LIAISONS).data[2]  # points de survol au milieu des arcs
+    assert len(hover.text) == 2
+    assert "Paris → Lyon : 3 trajets" in hover.text
 
 
 def test_liaisons_map_empty_does_not_crash() -> None:
-    assert len(liaisons_map([]).data) == 0
+    fig = liaisons_map([])
+    assert len(fig.data) == 3
+    assert list(fig.data[0].lat) == []
