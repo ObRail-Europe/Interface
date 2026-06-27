@@ -1,6 +1,9 @@
 """Tests des composants graphiques (fonctions pures, sans API)."""
 
 from components.charts import (
+    carbon_density_scatter,
+    co2_distribution_box,
+    comparaison_avion_bars,
     departs_map,
     distance_histogram,
     jour_nuit_donut,
@@ -113,3 +116,94 @@ def test_distance_histogram_is_stacked_jour_nuit() -> None:
 def test_distance_histogram_empty_does_not_crash() -> None:
     fig = distance_histogram({"bin_km": 100, "bins": []})
     assert len(fig.data) == 2
+
+
+_COMPARAISON = {
+    "facteur_avion_g_par_pkm": 230.0,
+    "co2_train_total_t": 5.0,
+    "co2_avion_estime_t": 55.0,
+    "co2_evite_t": 50.0,
+    "par_tranche": [
+        {"min_km": 0.0, "max_km": 50.0, "train_t": 2.0, "avion_t": 25.0},
+        {"min_km": 50.0, "max_km": 100.0, "train_t": 3.0, "avion_t": 30.0},
+    ],
+}
+
+
+def test_comparaison_avion_bars_groups_train_and_avion() -> None:
+    fig = comparaison_avion_bars(_COMPARAISON)
+    assert len(fig.data) == 2  # train réel + avion estimé
+    assert fig.layout.barmode == "group"
+    assert list(fig.data[0].y) == [2.0, 3.0]  # train
+    assert list(fig.data[1].y) == [25.0, 30.0]  # avion
+    assert list(fig.data[0].x) == ["0–50", "50–100"]  # tranches de distance
+
+
+def test_comparaison_avion_bars_empty_does_not_crash() -> None:
+    fig = comparaison_avion_bars({**_COMPARAISON, "par_tranche": []})
+    assert len(fig.data) == 2
+
+
+_DENSITY = {
+    "bins": [
+        {"x_km": 0.0, "y_co2_pkm": 20.0, "mode": "train", "count": 8},
+        {"x_km": 50.0, "y_co2_pkm": 20.0, "mode": "train", "count": 4},
+        {"x_km": 650.0, "y_co2_pkm": 250.0, "mode": "flight", "count": 3},
+    ]
+}
+
+
+def test_carbon_density_scatter_one_trace_per_mode() -> None:
+    fig = carbon_density_scatter(_DENSITY)
+    assert len(fig.data) == 2  # train + avion
+    train, avion = fig.data[0], fig.data[1]
+    assert train.name == "Train"
+    assert list(train.x) == [0.0, 50.0]  # 2 cellules train
+    assert list(avion.y) == [250.0]  # 1 cellule avion
+
+
+def test_carbon_density_scatter_empty_does_not_crash() -> None:
+    fig = carbon_density_scatter({"bins": []})
+    assert len(fig.data) == 2
+
+
+_DISTRIBUTION = {
+    "modes": [
+        {
+            "mode": "train",
+            "count": 100,
+            "min": 1.0,
+            "q1": 2.0,
+            "mediane": 3.0,
+            "q3": 4.0,
+            "max": 30.0,
+            "moyenne": 3.5,
+        },
+        {
+            "mode": "flight",
+            "count": 80,
+            "min": 150.0,
+            "q1": 200.0,
+            "mediane": 250.0,
+            "q3": 300.0,
+            "max": 356.0,
+            "moyenne": 251.0,
+        },
+    ]
+}
+
+
+def test_co2_distribution_box_one_box_per_mode() -> None:
+    fig = co2_distribution_box(_DISTRIBUTION)
+    assert len(fig.data) == 2  # un box par mode
+    train, avion = fig.data[0], fig.data[1]
+    assert train.name == "Train"
+    assert list(train.median) == [3.0]
+    assert list(train.q1) == [2.0] and list(train.q3) == [4.0]
+    # Catégories x distinctes : les box ne se superposent pas.
+    assert list(train.x) == ["Train"]
+    assert list(avion.x) == ["Avion"]
+
+
+def test_co2_distribution_box_empty_does_not_crash() -> None:
+    assert len(co2_distribution_box({"modes": []}).data) == 0

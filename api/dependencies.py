@@ -10,9 +10,11 @@ from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from database import get_db
-from repositories.interfaces import StatsRepository, TrajetRepository
+from repositories.carbon_repository import SqlAlchemyCarbonRepository
+from repositories.interfaces import CarbonRepository, StatsRepository, TrajetRepository
 from repositories.stats_repository import SqlAlchemyStatsRepository
 from repositories.trajet_repository import SqlAlchemyTrajetRepository
+from services.carbon_service import CarbonService
 from services.explorer_service import ExplorerService
 from services.overview_service import OverviewService
 
@@ -35,3 +37,13 @@ def get_explorer_service(
     repository: Annotated[TrajetRepository, Depends(get_trajet_repository)],
 ) -> ExplorerService:
     return ExplorerService(repository)
+
+
+def get_carbon_repository(session: Annotated[Session, Depends(get_db)]) -> CarbonRepository:
+    return SqlAlchemyCarbonRepository(session)
+
+
+def get_carbon_service(
+    repository: Annotated[CarbonRepository, Depends(get_carbon_repository)],
+) -> CarbonService:
+    return CarbonService(repository)

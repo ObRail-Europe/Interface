@@ -8,7 +8,8 @@ Chaque vue a un **index unique** : il garantit l'unicité de la clé et permet l
 `REFRESH MATERIALIZED VIEW CONCURRENTLY` (rafraîchissement sans bloquer les lectures).
 
 Registre unique (réutilisé par les migrations Alembic, l'ETL et les tests). Chaque
-migration ne gère que les vues de son onglet (groupes `OVERVIEW_VIEWS`, `EXPLORER_VIEWS`).
+migration ne gère que les vues de son onglet (groupes `OVERVIEW_VIEWS`, `EXPLORER_VIEWS`,
+`CARBON_VIEWS`).
 """
 
 from collections.abc import Iterable
@@ -110,11 +111,62 @@ _VIEW_DDL: dict[str, tuple[str, str]] = {
         """,
         "CREATE UNIQUE INDEX IF NOT EXISTS ix_mv_distance_hist_bin ON mv_distance_hist (bin_min)",
     ),
+    "mv_co2_comparaison": (
+        """
+        CREATE MATERIALIZED VIEW IF NOT EXISTS mv_co2_comparaison AS
+        SELECT
+          floor(distance_km / 50) * 50 AS dist_min,      -- tranches de 50 km
+          count(*) AS nb_trajets,
+          sum(distance_km) AS train_pkm,                 -- voyageur-km (1 voyageur / trajet)
+          sum(emissions_co2) AS train_emissions_g
+        FROM trajets
+        WHERE mode = 'train' AND distance_km IS NOT NULL AND emissions_co2 IS NOT NULL
+        GROUP BY floor(distance_km / 50)
+        """,
+        "CREATE UNIQUE INDEX IF NOT EXISTS ix_mv_co2_comparaison_bin "
+        "ON mv_co2_comparaison (dist_min)",
+    ),
+    "mv_carbon_density": (
+        """
+        CREATE MATERIALIZED VIEW IF NOT EXISTS mv_carbon_density AS
+        SELECT
+          mode,
+          floor(distance_km / 50) * 50 + 25 AS dist_mid,  -- centre du bin (50 km)
+          floor(co2_per_pkm / 2) * 2 + 1 AS co2_mid,       -- centre du bin (2 g/pkm)
+          count(*) AS nb_trajets
+        FROM trajets
+        WHERE mode IN ('train', 'flight')
+          AND distance_km IS NOT NULL AND co2_per_pkm IS NOT NULL
+        GROUP BY mode, floor(distance_km / 50), floor(co2_per_pkm / 2)
+        """,
+        "CREATE UNIQUE INDEX IF NOT EXISTS ix_mv_carbon_density_cell "
+        "ON mv_carbon_density (mode, dist_mid, co2_mid)",
+    ),
+    "mv_co2_distribution": (
+        """
+        CREATE MATERIALIZED VIEW IF NOT EXISTS mv_co2_distribution AS
+        SELECT
+          mode,
+          count(*) AS nb_trajets,
+          min(co2_per_pkm) AS co2_min,
+          percentile_cont(0.25) WITHIN GROUP (ORDER BY co2_per_pkm) AS co2_q1,
+          percentile_cont(0.50) WITHIN GROUP (ORDER BY co2_per_pkm) AS co2_median,
+          percentile_cont(0.75) WITHIN GROUP (ORDER BY co2_per_pkm) AS co2_q3,
+          max(co2_per_pkm) AS co2_max,
+          avg(co2_per_pkm) AS co2_moy
+        FROM trajets
+        WHERE mode IN ('train', 'flight') AND co2_per_pkm IS NOT NULL
+        GROUP BY mode
+        """,
+        "CREATE UNIQUE INDEX IF NOT EXISTS ix_mv_co2_distribution_mode "
+        "ON mv_co2_distribution (mode)",
+    ),
 }
 
 OVERVIEW_VIEWS = ("mv_overview_kpi", "mv_operateurs", "mv_departs")
 EXPLORER_VIEWS = ("mv_liaisons", "mv_distance_hist")
-ALL_VIEWS = OVERVIEW_VIEWS + EXPLORER_VIEWS
+CARBON_VIEWS = ("mv_co2_comparaison", "mv_carbon_density", "mv_co2_distribution")
+ALL_VIEWS = OVERVIEW_VIEWS + EXPLORER_VIEWS + CARBON_VIEWS
 
 
 def create_views(connection: Connection, names: Iterable[str]) -> None:

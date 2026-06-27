@@ -6,10 +6,11 @@
 
 from dash import Dash, dcc, html
 
+from api.carbon_client import HttpCarbonClient
 from api.explorer_client import HttpExplorerClient
 from api.overview_client import HttpOverviewClient
 from config import settings
-from pages import explorer, overview
+from pages import carbon, explorer, overview
 
 
 def create_app() -> Dash:
@@ -19,6 +20,7 @@ def create_app() -> Dash:
 
     overview_client = HttpOverviewClient(settings.api_url)
     explorer_client = HttpExplorerClient(settings.api_url)
+    carbon_client = HttpCarbonClient(settings.api_url)
 
     app.layout = html.Div(
         className="app",
@@ -34,12 +36,18 @@ def create_app() -> Dash:
                         value="explorer",
                         children=explorer.layout(),
                     ),
+                    dcc.Tab(
+                        label="Empreinte carbone",
+                        value="carbon",
+                        children=carbon.layout(),
+                    ),
                 ],
             ),
         ],
     )
     overview.register_callbacks(app, overview_client)
     explorer.register_callbacks(app, explorer_client)
+    carbon.register_callbacks(app, carbon_client)
     return app
 
 

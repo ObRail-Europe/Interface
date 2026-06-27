@@ -122,3 +122,48 @@ class TrajetRepository(Protocol):
     def distance_histogram(self, bin_km: int) -> list[DistanceBinAggregate]: ...
 
     def get_trajet(self, trajet_id: int) -> Trajet | None: ...
+
+
+@dataclass(frozen=True)
+class Co2BandAggregate:
+    """Agrégats train d'une tranche de distance (base du comparatif train vs avion)."""
+
+    min_km: float
+    max_km: float
+    nb_trajets: int
+    train_pkm: float  # somme des distances (voyageur-km) des trajets train de la tranche
+    train_emissions_g: float
+
+
+@dataclass(frozen=True)
+class CarbonDensityCell:
+    """Cellule d'histogramme 2D (distance × intensité carbone) d'un mode."""
+
+    mode: str
+    x_km: float  # centre du bin de distance
+    y_co2_pkm: float  # centre du bin d'intensité (g/pkm)
+    count: int
+
+
+@dataclass(frozen=True)
+class ModeDistributionAggregate:
+    """Quartiles et extrêmes du CO₂/pkm d'un mode (box plot)."""
+
+    mode: str
+    count: int
+    co2_min: float
+    co2_q1: float
+    co2_median: float
+    co2_q3: float
+    co2_max: float
+    co2_moy: float
+
+
+class CarbonRepository(Protocol):
+    """Accès aux agrégats carbone (train vs avion) des vues matérialisées."""
+
+    def comparaison_bands(self) -> list[Co2BandAggregate]: ...
+
+    def carbon_density(self) -> list[CarbonDensityCell]: ...
+
+    def co2_distribution(self) -> list[ModeDistributionAggregate]: ...

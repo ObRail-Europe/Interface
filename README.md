@@ -172,6 +172,25 @@ des vues matérialisées (agrégats *train-only* précalculés, index unique pou
 La **table** et le **détail** manipulent de la donnée ligne à ligne : ils s'appuient sur les **index
 existants** de `trajets` (filtres) et la **clé primaire** (détail) — pas de vue ni d'index superflu.
 
+## Onglet « Empreinte carbone » (V5)
+
+Question centrale : **le train, alternative crédible à l'avion ?**
+
+| Viz | Endpoint API | Visualisation |
+| --- | --- | --- |
+| V5.1 CO₂ évité vs avion | `GET /api/v1/stats/co2/comparaison-avion?facteur_avion_g_par_pkm=N` | compteur (callout CO₂ évité) + barres comparées train réel vs estimation avion par tranche de distance |
+| V5.2 Distance × intensité | `GET /api/v1/stats/co2/scatter` | nuage de densité (distance × CO₂/pkm), bulles ∝ volume, couleur par mode |
+| V5.3 Distribution par mode | `GET /api/v1/stats/co2/par-mode` | box plot du CO₂/pkm, train vs avion |
+
+**Méthodo (transparence)** : le **facteur avion** (gCO₂e / voyageur-km) est un paramètre **exogène,
+documenté et affiché** (défaut `230 g/pkm`, ordre de grandeur ADEME/EEA pour le court/moyen-courrier),
+surchargeable par requête. L'estimation avion applique ce facteur aux **voyageur-km** parcourus en train.
+
+**Vues & index** : les trois endpoints lisent des **vues matérialisées** (`mv_co2_comparaison`,
+`mv_carbon_density`, `mv_co2_distribution`) — agrégats train/avion (totaux par tranche, histogramme 2D,
+quartiles) **précalculés** sur ~13M trajets, chacune dotée d'un **index unique** pour le refresh concurrent.
+Le front ne reçoit que des agrégats, jamais les points bruts.
+
 ## Qualité & workflow
 
 - **CI** : GitHub Actions (`.github/workflows/ci.yml`) - lint, tests, build des images Docker.
@@ -183,11 +202,12 @@ existants** de `trajets` (filtres) et la **clé primaire** (détail) — pas de 
 ## Feuille de route
 
 **Réalisé** : socle conteneurisé, schéma + ETL (ingestion & résolution des jointures),
-**onglet Vue d'ensemble** (KPI, jour/nuit, opérateurs, départs) et **onglet Explorateur de
-trajets** (liaisons, table, histogramme, détail).
+**onglet Vue d'ensemble** (KPI, jour/nuit, opérateurs, départs), **onglet Explorateur de
+trajets** (liaisons, table, histogramme, détail) et **onglet Empreinte carbone**
+(CO₂ évité vs avion, densité distance × intensité, distribution par mode).
 
 **À venir** :
 
-- **Onglets** : Jour/Nuit (détaillé), Opérateurs, Carbone/CO₂,
+- **Onglets** : Jour/Nuit (détaillé), Opérateurs,
   Territoires & couverture, Fragilité/Clusters, Qualité des données, Supervision.
 - **Monitoring** : Prometheus + Grafana. **Tests E2E** : Playwright.

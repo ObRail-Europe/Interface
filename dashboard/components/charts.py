@@ -4,7 +4,7 @@ from typing import Any
 
 import plotly.graph_objects as go
 
-from theme import COLOR_JOUR, COLOR_NUIT
+from theme import COLOR_AVION, COLOR_JOUR, COLOR_NUIT, COLOR_TRAIN
 
 _MARGIN = {"t": 50, "b": 10, "l": 10, "r": 10}
 
@@ -141,6 +141,108 @@ def liaisons_map(liaisons: list[dict[str, Any]]) -> go.Figure:
         },
         margin=_MARGIN,
         legend={"orientation": "h"},
+    )
+    return fig
+
+
+def comparaison_avion_bars(comparaison: dict[str, Any]) -> go.Figure:
+    """Barres comparées train réel vs estimation avion, par tranche de distance (V5.1)."""
+    tranches = comparaison["par_tranche"]
+    labels = [f"{int(t['min_km'])}–{int(t['max_km'])}" for t in tranches]
+    fig = go.Figure()
+    fig.add_trace(
+        go.Bar(
+            x=labels,
+            y=[t["train_t"] for t in tranches],
+            name="Train (réel)",
+            marker_color=COLOR_TRAIN,
+        )
+    )
+    fig.add_trace(
+        go.Bar(
+            x=labels,
+            y=[t["avion_t"] for t in tranches],
+            name="Avion (estimé)",
+            marker_color=COLOR_AVION,
+        )
+    )
+    fig.update_layout(
+        barmode="group",
+        title="CO₂ : train réel vs estimation avion, par distance",
+        xaxis_title="Distance (km)",
+        yaxis_title="CO₂ (t)",
+        margin=_MARGIN,
+        legend={"orientation": "h"},
+    )
+    return fig
+
+
+def carbon_density_scatter(density: dict[str, Any]) -> go.Figure:
+    """Densité distance × intensité carbone (V5.2) : une bulle par cellule, colorée par mode.
+
+    La taille des bulles encode le nombre de trajets ; les deux modes forment des nuages
+    distincts (le train à basse intensité, l'avion bien plus haut).
+    """
+    bins = density["bins"]
+    max_count = max((b["count"] for b in bins), default=1)
+    fig = go.Figure()
+    for mode, color, label in (("train", COLOR_TRAIN, "Train"), ("flight", COLOR_AVION, "Avion")):
+        cells = [b for b in bins if b["mode"] == mode]
+        hover = f"{label} — %{{x}} km · %{{y}} g/pkm : %{{customdata}} trajets<extra></extra>"
+        fig.add_trace(
+            go.Scatter(
+                x=[c["x_km"] for c in cells],
+                y=[c["y_co2_pkm"] for c in cells],
+                customdata=[c["count"] for c in cells],
+                mode="markers",
+                name=label,
+                marker={
+                    "color": color,
+                    "size": [c["count"] for c in cells],
+                    "sizemode": "area",
+                    "sizeref": 2 * max_count / (30**2),
+                    "sizemin": 3,
+                    "opacity": 0.5,
+                },
+                hovertemplate=hover,
+            )
+        )
+    fig.update_layout(
+        title="Distance × intensité carbone (densité)",
+        xaxis_title="Distance (km)",
+        yaxis_title="CO₂ (g/pkm)",
+        margin=_MARGIN,
+        legend={"orientation": "h"},
+    )
+    return fig
+
+
+def co2_distribution_box(distribution: dict[str, Any]) -> go.Figure:
+    """Box plot du CO₂/pkm par mode (V5.3), à partir des quartiles précalculés."""
+    colors = {"train": COLOR_TRAIN, "flight": COLOR_AVION}
+    labels = {"train": "Train", "flight": "Avion"}
+    fig = go.Figure()
+    for mode in distribution["modes"]:
+        key = mode["mode"]
+        label = labels.get(key, key)
+        fig.add_trace(
+            go.Box(
+                name=label,
+                x=[label],  # une catégorie distincte par mode (sinon les box se superposent)
+                q1=[mode["q1"]],
+                median=[mode["mediane"]],
+                q3=[mode["q3"]],
+                lowerfence=[mode["min"]],
+                upperfence=[mode["max"]],
+                mean=[mode["moyenne"]],
+                marker_color=colors.get(key),
+            )
+        )
+    fig.update_layout(
+        title="Distribution du CO₂/pkm par mode",
+        yaxis_title="CO₂ (g/pkm)",
+        margin=_MARGIN,
+        showlegend=False,
     )
     return fig
 

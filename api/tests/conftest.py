@@ -119,3 +119,52 @@ def client(seeded_session: Session) -> Generator:
             yield test_client
     finally:
         app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def carbon_session(engine: Engine) -> Generator[Session]:
+    """Seed enrichi de vols (`train` + `flight`) pour l'onglet « Empreinte carbone ».
+
+    Les endpoints carbone comparent les deux modes : le seed standard est train-only,
+    on lui ajoute donc un échantillon de vols avant de rafraîchir les vues.
+    """
+    with Session(engine) as setup:
+        truncate_all(setup)
+        load_villes(setup, FIXTURES / "villes_sample.csv")
+        load_clusters(setup, FIXTURES / "clusters_sample.csv")
+        setup.commit()
+    load_trajets(engine, FIXTURES / "trajets_sample.csv")
+    load_trajets(engine, FIXTURES / "trajets_flights_sample.csv")
+    with Session(engine) as setup:
+        resolve_clusters(setup)
+        resolve_trajets(setup)
+        setup.commit()
+    refresh_views(engine)  # les vues matérialisées reflètent le seed train + vols
+
+    sess = Session(engine)
+    try:
+        yield sess
+    finally:
+        sess.close()
+        with Session(engine) as cleanup:
+            truncate_all(cleanup)
+            cleanup.commit()
+
+
+@pytest.fixture
+def carbon_client(carbon_session: Session) -> Generator:
+    """Client HTTP de test branché sur le seed carbone (train + vols)."""
+    from fastapi.testclient import TestClient
+
+    from database import get_db
+    from main import app
+
+    def _override_get_db() -> Generator[Session]:
+        yield carbon_session
+
+    app.dependency_overrides[get_db] = _override_get_db
+    try:
+        with TestClient(app) as test_client:
+            yield test_client
+    finally:
+        app.dependency_overrides.clear()
