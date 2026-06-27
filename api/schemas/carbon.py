@@ -30,8 +30,8 @@ class ComparaisonAvion(BaseModel):
 class ScatterBin(BaseModel):
     """Cellule de densité (distance × intensité carbone) pour un mode."""
 
-    x_km: float  # borne basse du bin de distance
-    y_co2_pkm: float  # borne basse du bin d'intensité (g/pkm)
+    x_km: float  # centre du bin de distance
+    y_co2_pkm: float  # centre du bin d'intensité (g/pkm)
     mode: str
     count: int
 

@@ -20,9 +20,9 @@ ORDER BY dist_min
 """)
 
 _DENSITY_SQL = text("""
-SELECT mode, dist_min, co2_min, nb_trajets
+SELECT mode, dist_mid, co2_mid, nb_trajets
 FROM mv_carbon_density
-ORDER BY mode, dist_min, co2_min
+ORDER BY mode, dist_mid, co2_mid
 """)
 
 _DISTRIBUTION_SQL = text("""
@@ -56,8 +56,8 @@ class SqlAlchemyCarbonRepository:
         return [
             CarbonDensityCell(
                 mode=row["mode"],
-                x_km=float(row["dist_min"]),
-                y_co2_pkm=float(row["co2_min"]),
+                x_km=float(row["dist_mid"]),
+                y_co2_pkm=float(row["co2_mid"]),
                 count=row["nb_trajets"],
             )
             for row in rows

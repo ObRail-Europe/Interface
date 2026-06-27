@@ -131,16 +131,16 @@ _VIEW_DDL: dict[str, tuple[str, str]] = {
         CREATE MATERIALIZED VIEW IF NOT EXISTS mv_carbon_density AS
         SELECT
           mode,
-          floor(distance_km / 50) * 50 AS dist_min,    -- bins de 50 km
-          floor(co2_per_pkm / 10) * 10 AS co2_min,      -- bins de 10 g/pkm
+          floor(distance_km / 50) * 50 + 25 AS dist_mid,  -- centre du bin (50 km)
+          floor(co2_per_pkm / 2) * 2 + 1 AS co2_mid,       -- centre du bin (2 g/pkm)
           count(*) AS nb_trajets
         FROM trajets
         WHERE mode IN ('train', 'flight')
           AND distance_km IS NOT NULL AND co2_per_pkm IS NOT NULL
-        GROUP BY mode, floor(distance_km / 50), floor(co2_per_pkm / 10)
+        GROUP BY mode, floor(distance_km / 50), floor(co2_per_pkm / 2)
         """,
         "CREATE UNIQUE INDEX IF NOT EXISTS ix_mv_carbon_density_cell "
-        "ON mv_carbon_density (mode, dist_min, co2_min)",
+        "ON mv_carbon_density (mode, dist_mid, co2_mid)",
     ),
     "mv_co2_distribution": (
         """

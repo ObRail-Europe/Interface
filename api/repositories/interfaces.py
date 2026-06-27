@@ -140,8 +140,8 @@ class CarbonDensityCell:
     """Cellule d'histogramme 2D (distance × intensité carbone) d'un mode."""
 
     mode: str
-    x_km: float  # borne basse du bin de distance
-    y_co2_pkm: float  # borne basse du bin d'intensité (g/pkm)
+    x_km: float  # centre du bin de distance
+    y_co2_pkm: float  # centre du bin d'intensité (g/pkm)
     count: int
 
 
