@@ -9,7 +9,12 @@ from sqlalchemy import Integer, cast, func, select
 from sqlalchemy.orm import Session
 
 from models import Ville
-from repositories.interfaces import CouvertureMailleAggregate, VilleGeoAggregate
+from repositories.interfaces import (
+    AmplitudeAggregate,
+    AmplitudeBinAggregate,
+    CouvertureMailleAggregate,
+    VilleGeoAggregate,
+)
 
 # Liste blanche des dimensions cartographiables (nom public -> colonne ORM).
 _DIMENSIONS = {
@@ -103,3 +108,26 @@ class SqlAlchemyTerritoireRepository:
             )
             for row in rows
         ]
+
+    def amplitude(self, bin_h: float) -> AmplitudeAggregate:
+        bucket = func.floor(Ville.amplitude_moy_h / bin_h) * bin_h
+        bins_stmt = (
+            select(bucket.label("min_h"), func.count().label("nb_communes"))
+            .where(Ville.amplitude_moy_h.isnot(None))
+            .group_by(bucket)
+            .order_by(bucket)
+        )
+        bins = [
+            AmplitudeBinAggregate(
+                min_h=float(row.min_h),
+                max_h=float(row.min_h) + bin_h,
+                nb_communes=row.nb_communes,
+            )
+            for row in self._session.execute(bins_stmt).all()
+        ]
+        part = self._session.scalar(
+            select(func.avg(cast(Ville.dernier_depart_apres_minuit, Integer))).where(
+                Ville.dernier_depart_apres_minuit.isnot(None)
+            )
+        )
+        return AmplitudeAggregate(bins=bins, part_apres_minuit=float(part or 0.0))

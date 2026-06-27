@@ -193,6 +193,23 @@ class CouvertureMailleAggregate:
     accessibilite_moy: float | None
 
 
+@dataclass(frozen=True)
+class AmplitudeBinAggregate:
+    """Tranche d'amplitude de service (heures) et nombre de communes."""
+
+    min_h: float
+    max_h: float
+    nb_communes: int
+
+
+@dataclass(frozen=True)
+class AmplitudeAggregate:
+    """Distribution de l'amplitude de service + part des communes desservies après minuit."""
+
+    bins: list[AmplitudeBinAggregate]
+    part_apres_minuit: float
+
+
 class TerritoireRepository(Protocol):
     """Accès aux données de l'onglet « Territoires & couverture ».
 
@@ -210,3 +227,5 @@ class TerritoireRepository(Protocol):
     ) -> list[VilleGeoAggregate]: ...
 
     def couverture(self, by: str) -> list[CouvertureMailleAggregate]: ...
+
+    def amplitude(self, bin_h: float) -> AmplitudeAggregate: ...

@@ -1,6 +1,6 @@
 """Tests des composants de l'onglet Territoires."""
 
-from components.charts import couverture_bars, couverture_map
+from components.charts import amplitude_hist, couverture_bars, couverture_map
 
 _POINTS = [
     {
@@ -73,4 +73,27 @@ def test_couverture_bars_sorted_largest_on_top() -> None:
 
 def test_couverture_bars_empty_does_not_crash() -> None:
     fig = couverture_bars({"by": "code_region", "mailles": []})
+    assert len(fig.data[0].x) == 0
+
+
+_AMPLITUDE = {
+    "bin_h": 1.0,
+    "part_apres_minuit": 0.42,
+    "bins": [
+        {"min_h": 16.0, "max_h": 17.0, "nb_communes": 3},
+        {"min_h": 17.0, "max_h": 18.0, "nb_communes": 5},
+    ],
+}
+
+
+def test_amplitude_hist_bars_and_part_in_title() -> None:
+    fig = amplitude_hist(_AMPLITUDE)
+    bar = fig.data[0]
+    assert list(bar.x) == [16.0, 17.0]
+    assert list(bar.y) == [3, 5]
+    assert "42%" in fig.layout.title.text  # part après minuit affichée
+
+
+def test_amplitude_hist_empty_does_not_crash() -> None:
+    fig = amplitude_hist({"bin_h": 1.0, "part_apres_minuit": 0.0, "bins": []})
     assert len(fig.data[0].x) == 0

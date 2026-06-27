@@ -23,6 +23,8 @@ class TerritoireClient(Protocol):
 
     def get_couverture(self, by: str) -> dict[str, Any]: ...
 
+    def get_amplitude(self) -> dict[str, Any]: ...
+
 
 class HttpTerritoireClient(BaseHttpClient):
     """Implémentation HTTP basée sur `requests`."""
@@ -42,3 +44,6 @@ class HttpTerritoireClient(BaseHttpClient):
 
     def get_couverture(self, by: str = "code_dept") -> dict[str, Any]:
         return self._get(f"/api/v1/stats/couverture?{urlencode({'by': by})}")
+
+    def get_amplitude(self) -> dict[str, Any]:
+        return self._get("/api/v1/stats/amplitude")

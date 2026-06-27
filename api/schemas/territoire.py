@@ -31,3 +31,19 @@ class Couverture(BaseModel):
 
     by: str  # "code_dept" | "code_region"
     mailles: list[CouvertureMaille]
+
+
+class AmplitudeBin(BaseModel):
+    """Tranche d'amplitude de service (heures) et nombre de communes concernées."""
+
+    min_h: float
+    max_h: float
+    nb_communes: int
+
+
+class AmplitudeDistribution(BaseModel):
+    """V6.4 — distribution de l'amplitude de service + part desservie après minuit."""
+
+    bin_h: float
+    part_apres_minuit: float  # 0..1
+    bins: list[AmplitudeBin]

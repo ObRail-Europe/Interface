@@ -5,7 +5,7 @@ from typing import Any
 from dash import Dash, Input, Output, dcc, html
 
 from api.territoire_client import TerritoireClient
-from components.charts import couverture_bars, couverture_map
+from components.charts import amplitude_hist, couverture_bars, couverture_map
 
 _DIMENSIONS = {
     "nb_trajets_total": "Trajets desservis",
@@ -50,6 +50,9 @@ def layout() -> html.Div:
                 ],
             ),
             dcc.Loading(dcc.Graph(id="couverture-bars")),
+            html.H3("Amplitude de service"),
+            dcc.Interval(id="terr-trigger", interval=200, max_intervals=1),
+            dcc.Loading(dcc.Graph(id="amplitude-hist")),
         ],
     )
 
@@ -79,3 +82,14 @@ def register_callbacks(app: Dash, client: TerritoireClient) -> None:
         except Exception:
             return {}
         return couverture_bars(couverture)
+
+    @app.callback(
+        Output("amplitude-hist", "figure"),
+        Input("terr-trigger", "n_intervals"),
+    )
+    def _load_amplitude(_n_intervals: int | None) -> Any:
+        try:
+            distribution = client.get_amplitude()
+        except Exception:
+            return {}
+        return amplitude_hist(distribution)

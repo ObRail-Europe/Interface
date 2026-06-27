@@ -1,6 +1,11 @@
 """Tests unitaires du service Territoires (repository en mémoire, sans base)."""
 
-from repositories.interfaces import CouvertureMailleAggregate, VilleGeoAggregate
+from repositories.interfaces import (
+    AmplitudeAggregate,
+    AmplitudeBinAggregate,
+    CouvertureMailleAggregate,
+    VilleGeoAggregate,
+)
 from services.territoire_service import TerritoireService
 
 
@@ -11,9 +16,11 @@ class FakeTerritoireRepository:
         self,
         villes: list[VilleGeoAggregate] | None = None,
         mailles: list[CouvertureMailleAggregate] | None = None,
+        amplitude: AmplitudeAggregate | None = None,
     ) -> None:
         self._villes = villes or []
         self._mailles = mailles or []
+        self._amplitude = amplitude or AmplitudeAggregate(bins=[], part_apres_minuit=0.0)
         self.last_call: dict[str, object] = {}
 
     def villes_carte(
@@ -34,6 +41,10 @@ class FakeTerritoireRepository:
     def couverture(self, by: str) -> list[CouvertureMailleAggregate]:
         self.last_call = {"by": by}
         return self._mailles
+
+    def amplitude(self, bin_h: float) -> AmplitudeAggregate:
+        self.last_call = {"bin_h": bin_h}
+        return self._amplitude
 
 
 def test_get_carte_maps_to_geo_points() -> None:
@@ -63,3 +74,18 @@ def test_get_couverture_maps_mailles() -> None:
     assert couverture.mailles[0].cle == "75"
     assert couverture.mailles[0].taux_avec_gare == 1.0
     assert repo.last_call == {"by": "code_dept"}
+
+
+def test_get_amplitude_maps_bins_and_part() -> None:
+    repo = FakeTerritoireRepository(
+        amplitude=AmplitudeAggregate(
+            bins=[AmplitudeBinAggregate(16.0, 17.0, 3), AmplitudeBinAggregate(17.0, 18.0, 5)],
+            part_apres_minuit=0.42,
+        )
+    )
+    dist = TerritoireService(repo).get_amplitude(bin_h=1.0)
+
+    assert dist.bin_h == 1.0
+    assert dist.part_apres_minuit == 0.42
+    assert [b.nb_communes for b in dist.bins] == [3, 5]
+    assert repo.last_call == {"bin_h": 1.0}

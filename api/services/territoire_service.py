@@ -2,7 +2,13 @@
 
 from repositories.interfaces import TerritoireRepository
 from schemas.liaison import GeoPoint
-from schemas.territoire import Couverture, CouvertureMaille, VilleGeoPoint
+from schemas.territoire import (
+    AmplitudeBin,
+    AmplitudeDistribution,
+    Couverture,
+    CouvertureMaille,
+    VilleGeoPoint,
+)
 
 
 class TerritoireService:
@@ -44,5 +50,17 @@ class TerritoireService:
                     accessibilite_moy=m.accessibilite_moy,
                 )
                 for m in self._repository.couverture(by)
+            ],
+        )
+
+    def get_amplitude(self, bin_h: float = 1.0) -> AmplitudeDistribution:
+        """V6.4 — distribution de l'amplitude de service + part desservie après minuit."""
+        agg = self._repository.amplitude(bin_h)
+        return AmplitudeDistribution(
+            bin_h=bin_h,
+            part_apres_minuit=agg.part_apres_minuit,
+            bins=[
+                AmplitudeBin(min_h=b.min_h, max_h=b.max_h, nb_communes=b.nb_communes)
+                for b in agg.bins
             ],
         )

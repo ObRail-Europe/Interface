@@ -54,3 +54,21 @@ def test_couverture_endpoint_by_region(client: TestClient) -> None:
 
 def test_couverture_endpoint_rejects_unknown_maille(client: TestClient) -> None:
     assert client.get(f"{_COUVERTURE}?by=code_commune").status_code == 422
+
+
+_AMPLITUDE = "/api/v1/stats/amplitude"
+
+
+def test_amplitude_endpoint(client: TestClient) -> None:
+    data = client.get(_AMPLITUDE).json()
+    assert data["bin_h"] == 1.0
+    # 12 communes du seed ont une amplitude renseignée.
+    assert sum(b["nb_communes"] for b in data["bins"]) == 12
+    # 5 communes desservies après minuit / 12.
+    assert abs(data["part_apres_minuit"] - 5 / 12) < 1e-6
+    mins = [b["min_h"] for b in data["bins"]]
+    assert mins == sorted(mins)  # bins ordonnés
+
+
+def test_amplitude_endpoint_rejects_out_of_range_bin(client: TestClient) -> None:
+    assert client.get(f"{_AMPLITUDE}?bin_h=0").status_code == 422

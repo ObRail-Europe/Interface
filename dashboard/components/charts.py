@@ -342,3 +342,25 @@ def couverture_bars(couverture: dict[str, Any], limit: int = 20) -> go.Figure:
         margin=_MARGIN,
     )
     return fig
+
+
+def amplitude_hist(distribution: dict[str, Any]) -> go.Figure:
+    """Distribution de l'amplitude de service (V6.4) ; part desservie après minuit en sous-titre."""
+    bins = distribution["bins"]
+    part = distribution["part_apres_minuit"]
+    fig = go.Figure(
+        go.Bar(
+            x=[b["min_h"] for b in bins],
+            y=[b["nb_communes"] for b in bins],
+            marker_color=COLOR_NUIT,
+            hovertemplate="%{x}–%{customdata} h : %{y} communes<extra></extra>",
+            customdata=[b["max_h"] for b in bins],
+        )
+    )
+    fig.update_layout(
+        title=f"Amplitude de service · {part:.0%} des communes desservies après minuit",
+        xaxis_title="Amplitude moyenne (h)",
+        yaxis_title="Communes",
+        margin=_MARGIN,
+    )
+    return fig
