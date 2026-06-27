@@ -62,6 +62,33 @@
   min-width: 160px;
 }
 
+.detail {
+  background: var(--c-surface);
+  border-radius: 10px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.detail dl {
+  margin: 0;
+}
+
+.detail dl > div {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.15rem 0;
+}
+
+.detail dt {
+  font-weight: 600;
+  color: var(--c-muted);
+  min-width: 110px;
+}
+
+.detail dd {
+  margin: 0;
+}
+
 .error {
   color: #b00020;
   padding: 0.75rem;

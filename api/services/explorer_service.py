@@ -5,7 +5,7 @@ import math
 from repositories.interfaces import TrajetFilter, TrajetRepository
 from schemas.distance import DistanceBin, DistanceHistogram
 from schemas.liaison import GeoPoint, Liaison
-from schemas.trajet import TrajetListItem, TrajetPage, TripFilter
+from schemas.trajet import TrajetDetail, TrajetListItem, TrajetPage, TripFilter
 
 # défault des bins de mv_distance_hist
 _BASE_BIN_KM = 25
@@ -53,6 +53,10 @@ class ExplorerService:
             page_size=page_size,
             pages=pages,
         )
+
+    def get_trajet(self, trajet_id: int) -> TrajetDetail | None:
+        trajet = self._repository.get_trajet(trajet_id)
+        return TrajetDetail.model_validate(trajet) if trajet is not None else None
 
     def get_distance_histogram(self, bin_km: int = 100) -> DistanceHistogram:
         effective = max(_BASE_BIN_KM, (bin_km // _BASE_BIN_KM) * _BASE_BIN_KM)

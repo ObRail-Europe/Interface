@@ -17,6 +17,8 @@ class ExplorerClient(Protocol):
 
     def get_distance_histogram(self, bin_km: int) -> dict[str, Any]: ...
 
+    def get_trajet(self, trajet_id: int) -> dict[str, Any]: ...
+
 
 class HttpExplorerClient(BaseHttpClient):
     """Implémentation HTTP basée sur `requests`."""
@@ -33,3 +35,6 @@ class HttpExplorerClient(BaseHttpClient):
 
     def get_distance_histogram(self, bin_km: int = 100) -> dict[str, Any]:
         return self._get(f"/api/v1/trajets/distances?bin_km={bin_km}")
+
+    def get_trajet(self, trajet_id: int) -> dict[str, Any]:
+        return self._get(f"/api/v1/trajets/{trajet_id}")

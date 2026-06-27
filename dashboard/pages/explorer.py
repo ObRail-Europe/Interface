@@ -2,11 +2,11 @@
 
 from typing import Any
 
-from dash import Dash, Input, Output, dcc, html
+from dash import Dash, Input, Output, State, dcc, html
 
 from api.explorer_client import ExplorerClient
 from components.charts import distance_histogram, liaisons_map
-from components.tables import filter_controls, sort_param, trajets_table
+from components.tables import filter_controls, sort_param, trajet_detail, trajets_table
 
 _NIGHT_TO_FILTER = {"jour": "false", "nuit": "true"}
 
@@ -23,6 +23,7 @@ def layout() -> html.Div:
             html.H3("Trajets"),
             filter_controls(),
             trajets_table(),
+            dcc.Loading(html.Div(id="trajet-detail")),
         ],
     )
 
@@ -79,3 +80,20 @@ def register_callbacks(app: Dash, client: ExplorerClient) -> None:
         except Exception:
             return [], 0
         return result["items"], result["pages"]
+
+    @app.callback(
+        Output("trajet-detail", "children"),
+        Input("trajets-table", "active_cell"),
+        State("trajets-table", "data"),
+    )
+    def _load_detail(active_cell: dict[str, Any] | None, data: list[dict[str, Any]] | None) -> Any:
+        if not active_cell or not data:
+            return None
+        trajet_id = data[active_cell["row"]].get("id")
+        if trajet_id is None:
+            return None
+        try:
+            detail = client.get_trajet(trajet_id)
+        except Exception:
+            return html.Div("Détail indisponible", className="error")
+        return trajet_detail(detail)

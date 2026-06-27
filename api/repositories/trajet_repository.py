@@ -112,3 +112,6 @@ class SqlAlchemyTrajetRepository:
             )
             for row in rows
         ]
+
+    def get_trajet(self, trajet_id: int) -> Trajet | None:
+        return self._session.get(Trajet, trajet_id)

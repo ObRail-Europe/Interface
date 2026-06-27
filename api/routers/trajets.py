@@ -2,12 +2,12 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from dependencies import get_explorer_service
 from schemas.distance import DistanceHistogram
 from schemas.liaison import Liaison
-from schemas.trajet import TrajetPage, TripFilter
+from schemas.trajet import TrajetDetail, TrajetPage, TripFilter
 from services.explorer_service import ExplorerService
 
 router = APIRouter(prefix="/api/v1/trajets", tags=["trajets"])
@@ -58,3 +58,11 @@ def list_trajets(
     sort: str = "id",
 ) -> TrajetPage:
     return service.list_trajets(criteria, sort, page, page_size)
+
+
+@router.get("/{trajet_id}", response_model=TrajetDetail, summary="Détail d'un trajet")
+def get_trajet(service: ServiceDep, trajet_id: int) -> TrajetDetail:
+    detail = service.get_trajet(trajet_id)
+    if detail is None:
+        raise HTTPException(status_code=404, detail="Trajet introuvable")
+    return detail

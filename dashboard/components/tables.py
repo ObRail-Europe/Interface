@@ -66,3 +66,28 @@ def sort_param(sort_by: list[dict[str, Any]] | None) -> str:
     column = sort_by[0]
     field = column["column_id"]
     return f"-{field}" if column.get("direction") == "desc" else field
+
+
+def trajet_detail(detail: dict[str, Any]) -> html.Div:
+    """Panneau de détail d'un trajet."""
+    dep = detail.get("departure_station") or detail.get("departure_city")
+    arr = detail.get("arrival_station") or detail.get("arrival_city")
+    fields = [
+        ("Opérateur", detail.get("agency_name")),
+        ("Ligne", detail.get("route_long_name") or detail.get("route_short_name")),
+        ("Départ", f"{dep} — {detail.get('departure_time')}"),
+        ("Arrivée", f"{arr} — {detail.get('arrival_time')}"),
+        ("Distance", f"{detail.get('distance_km')} km"),
+        ("Nuit", "Oui" if detail.get("is_night_train") else "Non"),
+        ("CO₂ / pkm", detail.get("co2_per_pkm")),
+        ("Émissions", f"{detail.get('emissions_co2')} g"),
+        ("Service", f"{detail.get('service_start_date')} → {detail.get('service_end_date')}"),
+        ("Jours", detail.get("days_of_week")),
+    ]
+    return html.Div(
+        className="detail",
+        children=[
+            html.H4(f"Trajet {detail.get('trip_id') or detail.get('id')}"),
+            html.Dl([html.Div([html.Dt(label), html.Dd(str(value))]) for label, value in fields]),
+        ],
+    )

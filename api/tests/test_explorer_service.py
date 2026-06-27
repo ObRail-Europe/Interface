@@ -17,11 +17,13 @@ class FakeTrajetRepository:
         rows: list[Any] | None = None,
         total: int = 0,
         distance_bins: list[DistanceBinAggregate] | None = None,
+        trajet: Any | None = None,
     ) -> None:
         self._liaisons = liaisons or []
         self._rows = rows or []
         self._total = total
         self._distance_bins = distance_bins or []
+        self._trajet = trajet
 
     def top_liaisons(self, limit: int) -> list[LiaisonAggregate]:
         return self._liaisons[:limit]
@@ -33,6 +35,9 @@ class FakeTrajetRepository:
 
     def distance_histogram(self, bin_km: int) -> list[DistanceBinAggregate]:
         return self._distance_bins
+
+    def get_trajet(self, trajet_id: int) -> Any | None:
+        return self._trajet
 
 
 def test_get_liaisons_maps_and_computes_part_nuit() -> None:
@@ -100,3 +105,7 @@ def test_distance_histogram_snaps_bin_to_multiple_of_25() -> None:
 def test_distance_histogram_has_floor_bin() -> None:
     hist = ExplorerService(FakeTrajetRepository()).get_distance_histogram(bin_km=10)
     assert hist.bin_km == 25  # plancher
+
+
+def test_get_trajet_returns_none_when_absent() -> None:
+    assert ExplorerService(FakeTrajetRepository(trajet=None)).get_trajet(999) is None

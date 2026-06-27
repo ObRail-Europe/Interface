@@ -56,3 +56,15 @@ def test_distance_histogram_endpoint(client: TestClient) -> None:
     assert nuit == 3  # 3 trains de nuit
     mins = [b["min_km"] for b in data["bins"]]
     assert mins == sorted(mins)  # bins ordonnés
+
+
+def test_trajet_detail_endpoint(client: TestClient) -> None:
+    first = client.get("/api/v1/trajets?page_size=1").json()["items"][0]
+    detail = client.get(f"/api/v1/trajets/{first['id']}").json()
+    assert detail["id"] == first["id"]
+    assert detail["trip_id"] == first["trip_id"]
+    assert "service_start_date" in detail  # champ du détail, absent de la liste
+
+
+def test_trajet_detail_not_found(client: TestClient) -> None:
+    assert client.get("/api/v1/trajets/999999").status_code == 404

@@ -1,4 +1,6 @@
-"""DTO de la liste paginée de trajets (V2.2)."""
+"""DTO de la liste paginée de trajets (V2.2) et du détail (V2.4)."""
+
+from datetime import date
 
 from pydantic import BaseModel, ConfigDict
 
@@ -47,3 +49,42 @@ class TrajetPage(BaseModel):
     page: int
     page_size: int
     pages: int
+
+
+class TrajetDetail(BaseModel):
+    """Détail complet d'un trajet."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    source: str | None
+    trip_id: str | None
+    mode: str | None
+    destination: str | None
+    trip_short_name: str | None
+    agency_name: str | None
+    agency_timezone: str | None
+    service_id: str | None
+    route_id: str | None
+    route_type: str | None
+    route_short_name: str | None
+    route_long_name: str | None
+    departure_station: str | None
+    departure_city: str | None
+    departure_country: str | None
+    departure_time: str | None
+    departure_parent_station: str | None
+    arrival_station: str | None
+    arrival_city: str | None
+    arrival_country: str | None
+    arrival_time: str | None
+    arrival_parent_station: str | None
+    service_start_date: date | None
+    service_end_date: date | None
+    days_of_week: str | None
+    is_night_train: bool | None
+    distance_km: float | None
+    co2_per_pkm: float | None
+    emissions_co2: float | None
+    departure_citycode: str | None
+    arrival_citycode: str | None
