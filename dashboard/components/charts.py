@@ -280,16 +280,19 @@ def couverture_map(points: list[dict[str, Any]], dimension_label: str) -> go.Fig
     """Carte de la couverture ferroviaire (V6.1) : couleur = dimension, taille ∝ population."""
     pops = [point["population"] or 0 for point in points]
     max_pop = max(pops) if pops else 1
+    # Valeur ramenée en milliers (lisibilité de la colorbar)
+    valeurs = [(point["valeur"] or 0) / 1000 for point in points]
     fig = go.Figure(
         go.Scattergeo(
             lat=[point["geo"]["lat"] for point in points],
             lon=[point["geo"]["lon"] for point in points],
             text=[
-                f"{point['city_name']} — {dimension_label} : {point['valeur'] / 1000:.2f}" for point in points
+                f"{point['city_name']} — {dimension_label} : {valeur:.2f}"
+                for point, valeur in zip(points, valeurs, strict=True)
             ],
             hoverinfo="text",
             marker={
-                "color": [point["valeur"] / 1000 for point in points],
+                "color": valeurs,
                 "colorscale": "Viridis",
                 "showscale": True,
                 "colorbar": {"title": dimension_label},
@@ -303,6 +306,39 @@ def couverture_map(points: list[dict[str, Any]], dimension_label: str) -> go.Fig
     fig.update_layout(
         title="Couverture ferroviaire des communes",
         geo=_GEO_EUROPE,
+        margin=_MARGIN,
+    )
+    return fig
+
+
+def couverture_bars(couverture: dict[str, Any], limit: int = 20) -> go.Figure:
+    """Couverture par maille (V6.2) : barres triées par desserte, couleur = taux de gare."""
+    rows = list(reversed(couverture["mailles"][:limit]))  # mieux desservi en haut
+    maille = "région" if couverture["by"] == "code_region" else "département"
+    fig = go.Figure(
+        go.Bar(
+            x=[m["nb_trajets_total"] for m in rows],
+            y=[m["cle"] for m in rows],
+            orientation="h",
+            marker={
+                "color": [m["taux_avec_gare"] for m in rows],
+                "colorscale": "Viridis",
+                "showscale": True,
+                "colorbar": {"title": "Taux gare"},
+                "cmin": 0,
+                "cmax": 1,
+            },
+            customdata=[[m["nb_communes"], m["taux_avec_gare"]] for m in rows],
+            hovertemplate=(
+                "%{y} — %{x} trajets · %{customdata[0]} communes · "
+                "gare %{customdata[1]:.0%}<extra></extra>"
+            ),
+        )
+    )
+    fig.update_layout(
+        title=f"Desserte par {maille} (top {limit})",
+        xaxis_title="Trajets desservis",
+        yaxis_title=maille.capitalize(),
         margin=_MARGIN,
     )
     return fig

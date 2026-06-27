@@ -182,6 +182,17 @@ class VilleGeoAggregate:
     has_gare: bool | None
 
 
+@dataclass(frozen=True)
+class CouvertureMailleAggregate:
+    """Couverture agrégée d'une maille (département ou région)."""
+
+    cle: str
+    nb_communes: int
+    taux_avec_gare: float
+    nb_trajets_total: int
+    accessibilite_moy: float | None
+
+
 class TerritoireRepository(Protocol):
     """Accès aux données de l'onglet « Territoires & couverture ».
 
@@ -197,3 +208,5 @@ class TerritoireRepository(Protocol):
         code_region: str | None,
         has_gare: bool | None,
     ) -> list[VilleGeoAggregate]: ...
+
+    def couverture(self, by: str) -> list[CouvertureMailleAggregate]: ...

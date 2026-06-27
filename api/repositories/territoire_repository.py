@@ -5,11 +5,11 @@ n'est nécessaire (agrégations triviales), et les colonnes filtrées sont déj�
 indexées au schéma (`code_dept`, `code_region`, `has_gare`).
 """
 
-from sqlalchemy import select
+from sqlalchemy import Integer, cast, func, select
 from sqlalchemy.orm import Session
 
 from models import Ville
-from repositories.interfaces import VilleGeoAggregate
+from repositories.interfaces import CouvertureMailleAggregate, VilleGeoAggregate
 
 # Liste blanche des dimensions cartographiables (nom public -> colonne ORM).
 _DIMENSIONS = {
@@ -20,6 +20,14 @@ _DIMENSIONS = {
 }
 
 DIMENSIONS = tuple(_DIMENSIONS)
+
+# Liste blanche des mailles d'agrégation.
+_MAILLES = {
+    "code_dept": Ville.code_dept,
+    "code_region": Ville.code_region,
+}
+
+MAILLES = tuple(_MAILLES)
 
 
 def _as_float(value: object) -> float | None:
@@ -66,6 +74,32 @@ class SqlAlchemyTerritoireRepository:
                 population=_as_float(row.population_insee),
                 valeur=_as_float(row.valeur),
                 has_gare=row.has_gare,
+            )
+            for row in rows
+        ]
+
+    def couverture(self, by: str) -> list[CouvertureMailleAggregate]:
+        col = _MAILLES[by]
+        stmt = (
+            select(
+                col.label("cle"),
+                func.count().label("nb_communes"),
+                func.avg(cast(Ville.has_gare, Integer)).label("taux_avec_gare"),
+                func.coalesce(func.sum(Ville.nb_trajets_total), 0).label("nb_trajets_total"),
+                func.avg(Ville.accessibilite_ord).label("accessibilite_moy"),
+            )
+            .where(col.isnot(None))
+            .group_by(col)
+            .order_by(func.coalesce(func.sum(Ville.nb_trajets_total), 0).desc())
+        )
+        rows = self._session.execute(stmt).all()
+        return [
+            CouvertureMailleAggregate(
+                cle=row.cle,
+                nb_communes=row.nb_communes,
+                taux_avec_gare=float(row.taux_avec_gare or 0.0),
+                nb_trajets_total=int(row.nb_trajets_total),
+                accessibilite_moy=_as_float(row.accessibilite_moy),
             )
             for row in rows
         ]

@@ -5,7 +5,7 @@ from typing import Any
 from dash import Dash, Input, Output, dcc, html
 
 from api.territoire_client import TerritoireClient
-from components.charts import couverture_map
+from components.charts import couverture_bars, couverture_map
 
 _DIMENSIONS = {
     "nb_trajets_total": "Trajets desservis",
@@ -13,6 +13,8 @@ _DIMENSIONS = {
     "accessibilite_ord": "Accessibilité",
     "dist_gare_min_m": "Distance à la gare (km)",
 }
+
+_MAILLES = {"code_dept": "Département", "code_region": "Région"}
 
 
 def layout() -> html.Div:
@@ -35,6 +37,19 @@ def layout() -> html.Div:
                 ],
             ),
             dcc.Loading(dcc.Graph(id="couverture-map")),
+            html.H3("Couverture par territoire"),
+            html.Div(
+                className="filters",
+                children=[
+                    dcc.Dropdown(
+                        id="terr-maille",
+                        options=[{"label": label, "value": key} for key, label in _MAILLES.items()],
+                        value="code_dept",
+                        clearable=False,
+                    ),
+                ],
+            ),
+            dcc.Loading(dcc.Graph(id="couverture-bars")),
         ],
     )
 
@@ -53,3 +68,14 @@ def register_callbacks(app: Dash, client: TerritoireClient) -> None:
         except Exception:
             return {}
         return couverture_map(points, _DIMENSIONS.get(dimension, dimension))
+
+    @app.callback(
+        Output("couverture-bars", "figure"),
+        Input("terr-maille", "value"),
+    )
+    def _load_couverture(maille: str | None) -> Any:
+        try:
+            couverture = client.get_couverture(maille or "code_dept")
+        except Exception:
+            return {}
+        return couverture_bars(couverture)

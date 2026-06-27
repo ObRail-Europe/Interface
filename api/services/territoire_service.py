@@ -2,7 +2,7 @@
 
 from repositories.interfaces import TerritoireRepository
 from schemas.liaison import GeoPoint
-from schemas.territoire import VilleGeoPoint
+from schemas.territoire import Couverture, CouvertureMaille, VilleGeoPoint
 
 
 class TerritoireService:
@@ -30,3 +30,19 @@ class TerritoireService:
             )
             for v in self._repository.villes_carte(dimension, code_dept, code_region, has_gare)
         ]
+
+    def get_couverture(self, by: str) -> Couverture:
+        """V6.2 — couverture ferroviaire agrégée par maille (département ou région)."""
+        return Couverture(
+            by=by,
+            mailles=[
+                CouvertureMaille(
+                    cle=m.cle,
+                    nb_communes=m.nb_communes,
+                    taux_avec_gare=m.taux_avec_gare,
+                    nb_trajets_total=m.nb_trajets_total,
+                    accessibilite_moy=m.accessibilite_moy,
+                )
+                for m in self._repository.couverture(by)
+            ],
+        )

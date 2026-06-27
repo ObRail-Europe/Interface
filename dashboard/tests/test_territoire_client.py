@@ -24,3 +24,16 @@ def test_get_carte_builds_query(monkeypatch: pytest.MonkeyPatch) -> None:
     assert "code_dept=75" in path
     assert "code_region" not in path  # None écarté
     assert "has_gare=true" in path
+
+
+def test_get_couverture_builds_query(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured: dict[str, str] = {}
+
+    def fake_get(self: HttpTerritoireClient, path: str) -> dict[str, Any]:
+        captured["path"] = path
+        return {"by": "code_region", "mailles": []}
+
+    monkeypatch.setattr(HttpTerritoireClient, "_get", fake_get)
+    HttpTerritoireClient("http://api").get_couverture("code_region")
+
+    assert captured["path"] == "/api/v1/stats/couverture?by=code_region"

@@ -14,3 +14,20 @@ class VilleGeoPoint(BaseModel):
     population: float | None
     valeur: float | None  # valeur de la dimension demandée (gare, accessibilité, trajets…)
     has_gare: bool | None
+
+
+class CouvertureMaille(BaseModel):
+    """Couverture agrégée d'une maille (département ou région)."""
+
+    cle: str
+    nb_communes: int
+    taux_avec_gare: float  # 0..1
+    nb_trajets_total: int
+    accessibilite_moy: float | None
+
+
+class Couverture(BaseModel):
+    """V6.2 — couverture ferroviaire par maille territoriale."""
+
+    by: str  # "code_dept" | "code_region"
+    mailles: list[CouvertureMaille]

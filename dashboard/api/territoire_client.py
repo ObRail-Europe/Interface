@@ -21,6 +21,8 @@ class TerritoireClient(Protocol):
         has_gare: bool | None = None,
     ) -> list[dict[str, Any]]: ...
 
+    def get_couverture(self, by: str) -> dict[str, Any]: ...
+
 
 class HttpTerritoireClient(BaseHttpClient):
     """Implémentation HTTP basée sur `requests`."""
@@ -37,3 +39,6 @@ class HttpTerritoireClient(BaseHttpClient):
         if has_gare is not None:
             query["has_gare"] = str(has_gare).lower()
         return self._get(f"/api/v1/villes/carte?{urlencode(query)}")
+
+    def get_couverture(self, by: str = "code_dept") -> dict[str, Any]:
+        return self._get(f"/api/v1/stats/couverture?{urlencode({'by': by})}")

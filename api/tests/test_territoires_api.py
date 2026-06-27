@@ -26,3 +26,31 @@ def test_carte_endpoint_dimension_has_gare(client: TestClient) -> None:
 
 def test_carte_endpoint_rejects_unknown_dimension(client: TestClient) -> None:
     assert client.get(f"{_CARTE}?dimension=revenu_median_uc").status_code == 422
+
+
+_COUVERTURE = "/api/v1/stats/couverture"
+
+
+def test_couverture_endpoint_by_dept(client: TestClient) -> None:
+    data = client.get(f"{_COUVERTURE}?by=code_dept").json()
+    assert data["by"] == "code_dept"
+    mailles = {m["cle"]: m for m in data["mailles"]}
+    # Dépt 95 : Ermont + Pontoise (2 communes) ; toutes deux avec gare dans le seed.
+    assert mailles["95"]["nb_communes"] == 2
+    assert mailles["95"]["taux_avec_gare"] == 1.0
+    assert mailles["75"]["nb_trajets_total"] == 331694
+    # Trié par desserte décroissante.
+    totaux = [m["nb_trajets_total"] for m in data["mailles"]]
+    assert totaux == sorted(totaux, reverse=True)
+
+
+def test_couverture_endpoint_by_region(client: TestClient) -> None:
+    data = client.get(f"{_COUVERTURE}?by=code_region").json()
+    assert data["by"] == "code_region"
+    # Région 11 (Île-de-France) : Paris, Bretigny, Ablon, Ermont, Pontoise = 5 communes.
+    idf = next(m for m in data["mailles"] if m["cle"] == "11")
+    assert idf["nb_communes"] == 5
+
+
+def test_couverture_endpoint_rejects_unknown_maille(client: TestClient) -> None:
+    assert client.get(f"{_COUVERTURE}?by=code_commune").status_code == 422
