@@ -33,6 +33,17 @@
   font-weight: 700;
 }
 
+.kpi-hero {
+  grid-column: 1 / -1;
+  background: #e8f3ec;
+  border: 1px solid #2e8b57;
+}
+
+.kpi-hero .kpi-value {
+  font-size: 2.4rem;
+  color: #2e8b57;
+}
+
 .kpi-label {
   font-size: 0.8rem;
   color: var(--c-muted);

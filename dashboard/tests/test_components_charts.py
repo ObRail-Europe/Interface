@@ -1,6 +1,7 @@
 """Tests des composants graphiques (fonctions pures, sans API)."""
 
 from components.charts import (
+    comparaison_avion_bars,
     departs_map,
     distance_histogram,
     jour_nuit_donut,
@@ -112,4 +113,30 @@ def test_distance_histogram_is_stacked_jour_nuit() -> None:
 
 def test_distance_histogram_empty_does_not_crash() -> None:
     fig = distance_histogram({"bin_km": 100, "bins": []})
+    assert len(fig.data) == 2
+
+
+_COMPARAISON = {
+    "facteur_avion_g_par_pkm": 230.0,
+    "co2_train_total_t": 5.0,
+    "co2_avion_estime_t": 55.0,
+    "co2_evite_t": 50.0,
+    "par_tranche": [
+        {"min_km": 0.0, "max_km": 50.0, "train_t": 2.0, "avion_t": 25.0},
+        {"min_km": 50.0, "max_km": 100.0, "train_t": 3.0, "avion_t": 30.0},
+    ],
+}
+
+
+def test_comparaison_avion_bars_groups_train_and_avion() -> None:
+    fig = comparaison_avion_bars(_COMPARAISON)
+    assert len(fig.data) == 2  # train réel + avion estimé
+    assert fig.layout.barmode == "group"
+    assert list(fig.data[0].y) == [2.0, 3.0]  # train
+    assert list(fig.data[1].y) == [25.0, 30.0]  # avion
+    assert list(fig.data[0].x) == ["0–50", "50–100"]  # tranches de distance
+
+
+def test_comparaison_avion_bars_empty_does_not_crash() -> None:
+    fig = comparaison_avion_bars({**_COMPARAISON, "par_tranche": []})
     assert len(fig.data) == 2

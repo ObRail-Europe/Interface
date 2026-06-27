@@ -122,3 +122,20 @@ class TrajetRepository(Protocol):
     def distance_histogram(self, bin_km: int) -> list[DistanceBinAggregate]: ...
 
     def get_trajet(self, trajet_id: int) -> Trajet | None: ...
+
+
+@dataclass(frozen=True)
+class Co2BandAggregate:
+    """Agrégats train d'une tranche de distance (base du comparatif train vs avion)."""
+
+    min_km: float
+    max_km: float
+    nb_trajets: int
+    train_pkm: float  # somme des distances (voyageur-km) des trajets train de la tranche
+    train_emissions_g: float
+
+
+class CarbonRepository(Protocol):
+    """Accès aux agrégats carbone (train vs avion) des vues matérialisées."""
+
+    def comparaison_bands(self) -> list[Co2BandAggregate]: ...

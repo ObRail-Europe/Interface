@@ -4,7 +4,7 @@ from typing import Any
 
 import plotly.graph_objects as go
 
-from theme import COLOR_JOUR, COLOR_NUIT
+from theme import COLOR_AVION, COLOR_JOUR, COLOR_NUIT, COLOR_TRAIN
 
 _MARGIN = {"t": 50, "b": 10, "l": 10, "r": 10}
 
@@ -139,6 +139,38 @@ def liaisons_map(liaisons: list[dict[str, Any]]) -> go.Figure:
             "projection_scale": 4.5,
             "showcountries": True,
         },
+        margin=_MARGIN,
+        legend={"orientation": "h"},
+    )
+    return fig
+
+
+def comparaison_avion_bars(comparaison: dict[str, Any]) -> go.Figure:
+    """Barres comparées train réel vs estimation avion, par tranche de distance (V5.1)."""
+    tranches = comparaison["par_tranche"]
+    labels = [f"{int(t['min_km'])}–{int(t['max_km'])}" for t in tranches]
+    fig = go.Figure()
+    fig.add_trace(
+        go.Bar(
+            x=labels,
+            y=[t["train_t"] for t in tranches],
+            name="Train (réel)",
+            marker_color=COLOR_TRAIN,
+        )
+    )
+    fig.add_trace(
+        go.Bar(
+            x=labels,
+            y=[t["avion_t"] for t in tranches],
+            name="Avion (estimé)",
+            marker_color=COLOR_AVION,
+        )
+    )
+    fig.update_layout(
+        barmode="group",
+        title="CO₂ : train réel vs estimation avion, par distance",
+        xaxis_title="Distance (km)",
+        yaxis_title="CO₂ (t)",
         margin=_MARGIN,
         legend={"orientation": "h"},
     )
