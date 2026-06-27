@@ -77,3 +77,91 @@ def departs_map(points: list[dict[str, Any]]) -> go.Figure:
         margin=_MARGIN,
     )
     return fig
+
+
+def liaisons_map(liaisons: list[dict[str, Any]]) -> go.Figure:
+    """Carte des liaisons origine→destination (V2.1).
+
+    Les arcs sont regroupés en deux traces jour/nuit : c'est
+    lisible et performant même avec un grand nombre de liaisons. Un point discret au
+    milieu de chaque arc porte l'info au survol (départ → arrivée + nombre de trajets).
+    """
+    segments: dict[str, tuple[list[float | None], list[float | None]]] = {
+        "jour": ([], []),
+        "nuit": ([], []),
+    }
+    mid_lats: list[float] = []
+    mid_lons: list[float] = []
+    hovers: list[str] = []
+    for liaison in liaisons:
+        dep, arr = liaison["departure"], liaison["arrival"]
+        lats, lons = segments["nuit" if liaison["part_nuit"] >= 0.5 else "jour"]
+        lats += [dep["lat"], arr["lat"], None]
+        lons += [dep["lon"], arr["lon"], None]
+        mid_lats.append((dep["lat"] + arr["lat"]) / 2)
+        mid_lons.append((dep["lon"] + arr["lon"]) / 2)
+        hovers.append(
+            f"{liaison['departure_city']} → {liaison['arrival_city']} : "
+            f"{liaison['nb_trajets']} trajets"
+        )
+
+    fig = go.Figure()
+    for key, color, opacity in (("jour", COLOR_JOUR, 0.35), ("nuit", COLOR_NUIT, 0.55)):
+        lats, lons = segments[key]
+        fig.add_trace(
+            go.Scattergeo(
+                lat=lats,
+                lon=lons,
+                mode="lines",
+                line={"width": 0.5, "color": color},
+                opacity=opacity,
+                name=key.capitalize(),
+                hoverinfo="skip",
+            )
+        )
+    # Points de survol au milieu des arcs.
+    fig.add_trace(
+        go.Scattergeo(
+            lat=mid_lats,
+            lon=mid_lons,
+            text=hovers,
+            mode="markers",
+            marker={"size": 4, "color": "#5a6478", "opacity": 0.15},
+            hoverinfo="text",
+            showlegend=False,
+        )
+    )
+    fig.update_layout(
+        title="Liaisons origine → destination",
+        geo={
+            "scope": "europe",
+            "center": {"lat": 46.6, "lon": 2.4},
+            "projection_scale": 4.5,
+            "showcountries": True,
+        },
+        margin=_MARGIN,
+        legend={"orientation": "h"},
+    )
+    return fig
+
+
+def distance_histogram(histogram: dict[str, Any]) -> go.Figure:
+    """Histogramme empilé des distances (V2.3), réparti jour/nuit."""
+    bins = histogram["bins"]
+    x = [b["min_km"] for b in bins]
+    fig = go.Figure()
+    fig.add_trace(
+        go.Bar(x=x, y=[b["count_jour"] for b in bins], name="Jour", marker_color=COLOR_JOUR)
+    )
+    fig.add_trace(
+        go.Bar(x=x, y=[b["count_nuit"] for b in bins], name="Nuit", marker_color=COLOR_NUIT)
+    )
+    fig.update_layout(
+        barmode="stack",
+        title=f"Distribution des distances (pas {histogram['bin_km']} km)",
+        xaxis_title="Distance (km)",
+        yaxis_title="Trajets",
+        margin=_MARGIN,
+        legend={"orientation": "h"},
+    )
+    return fig

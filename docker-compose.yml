@@ -7,6 +7,7 @@ x-db-url: &db-url postgresql+psycopg://${POSTGRES_USER:-obrail}:${POSTGRES_PASSW
 services:
   db:
     image: postgres:16
+    command: ["postgres", "-c", "max_wal_size=8GB", "-c", "work_mem=4GB", "-c", "shared_buffers=4GB"]
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-obrail}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-obrail}
@@ -20,6 +21,10 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 16G
 
   # Applique les migrations Alembic puis se termine (le schéma est prêt avant l'API).
   migrate:

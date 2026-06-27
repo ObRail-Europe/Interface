@@ -82,12 +82,12 @@ Choix de modélisation :
 - **`trajets`** : clé technique `id` (BigInteger), car `trip_id` n'est pas garanti unique sur ~13M lignes.
 - **Jointures résolues à l'ETL** : `clusters.citycode` par **coordonnées** (100 %) ;
   `trajets.departure/arrival_citycode` par **nom normalisé** (homonymes tranchés par gare puis population,
-  alias Paris/Lyon/Marseille, ~50 % côté FR — étranger/quartiers non résolus assumés).
+  alias Paris/Lyon/Marseille, ~50 % côté FR - étranger/quartiers non résolus assumés).
 - **Heures GTFS** (ex. `24:29:00`, valides en GTFS mais hors plage SQL `TIME`) conservées en **texte** ;
   dates de service typées `Date`.
 
 > Les **tests d'intégration** tournent sur une **base dédiée** (`TEST_DATABASE_URL`, sinon la base configurée
-> suffixée `_test`, créée si absente) — isolée des données de dev. Ignorés si PostgreSQL est indisponible ;
+> suffixée `_test`, créée si absente) - isolée des données de dev. Ignorés si PostgreSQL est indisponible ;
 > les tests de métadonnées tournent sans base.
 
 ## Structure
@@ -120,9 +120,9 @@ Interface/
 ## Architecture applicative (clean architecture)
 
 Les deux services sont organisés en **couches** avec **inversion de dépendance** : les couches
-métier dépendent d'abstractions (`Protocol`), pas d'implémentations — d'où une bonne testabilité.
+métier dépendent d'abstractions (`Protocol`), pas d'implémentations - d'où une bonne testabilité.
 
-**API** — câblage `router → service → repository → session` (via `dependencies.py`) :
+**API** - câblage `router → service → repository → session` (via `dependencies.py`) :
 
 | Couche | Dossier | Rôle |
 | --- | --- | --- |
@@ -151,12 +151,26 @@ Les **services** sont testés avec des doublures en mémoire ; les **endpoints**
 | V1.3 Densité des départs | `GET /api/v1/stats/departs` | carte géo, couleur/taille ∝ volume de départs |
 
 **Performances** : ces endpoints lisent des **vues matérialisées** (`mv_overview_kpi`,
-`mv_operateurs`, `mv_departs`, cf. `etl/views.py`) — les agrégats sur ~13M trajets sont
+`mv_operateurs`, `mv_departs`, cf. `etl/views.py`) - les agrégats sur ~13M trajets sont
 **précalculés** et rafraîchis par l'ETL (`REFRESH MATERIALIZED VIEW CONCURRENTLY`, non bloquant
 grâce à un **index unique** par vue). Un index B-tree classique n'aiderait pas une agrégation
 plein-table.
 
 Documentation interactive de l'API : **Swagger** sur `http://localhost:8000/docs`.
+
+## Onglet « Explorateur de trajets » (V2)
+
+| Viz | Endpoint API | Visualisation |
+| --- | --- | --- |
+| V2.1 Carte des liaisons | `GET /api/v1/trajets/liaisons?limit=N` | arcs O-D (train), regroupés jour/nuit, survol départ→arrivée |
+| V2.2 Table des trajets | `GET /api/v1/trajets` (filtres, `sort`, `page`, `page_size`) | table paginée / triée / filtrée **côté serveur** |
+| V2.3 Histogramme des distances | `GET /api/v1/trajets/distances?bin_km=100` | barres empilées jour/nuit |
+| V2.4 Détail d'un trajet | `GET /api/v1/trajets/{id}` | panneau details-on-demand (clic sur une ligne) |
+
+**Vues & index** : la **carte** (`mv_liaisons`) et l'**histogramme** (`mv_distance_hist`) lisent
+des vues matérialisées (agrégats *train-only* précalculés, index unique pour le refresh concurrent).
+La **table** et le **détail** manipulent de la donnée ligne à ligne : ils s'appuient sur les **index
+existants** de `trajets` (filtres) et la **clé primaire** (détail) — pas de vue ni d'index superflu.
 
 ## Qualité & workflow
 
@@ -169,10 +183,11 @@ Documentation interactive de l'API : **Swagger** sur `http://localhost:8000/docs
 ## Feuille de route
 
 **Réalisé** : socle conteneurisé, schéma + ETL (ingestion & résolution des jointures),
-**onglet Vue d'ensemble** (KPI, jour/nuit, opérateurs, départs).
+**onglet Vue d'ensemble** (KPI, jour/nuit, opérateurs, départs) et **onglet Explorateur de
+trajets** (liaisons, table, histogramme, détail).
 
 **À venir** :
 
-- **Onglets** : Explorateur de trajets, Jour/Nuit (détaillé), Opérateurs, Carbone/CO₂,
+- **Onglets** : Jour/Nuit (détaillé), Opérateurs, Carbone/CO₂,
   Territoires & couverture, Fragilité/Clusters, Qualité des données, Supervision.
 - **Monitoring** : Prometheus + Grafana. **Tests E2E** : Playwright.

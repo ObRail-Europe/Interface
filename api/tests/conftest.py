@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from config import settings
 from etl.loaders import load_clusters, load_trajets, load_villes, truncate_all
 from etl.resolve import resolve_clusters, resolve_trajets
-from etl.views import create_views, drop_views, refresh_views
+from etl.views import ALL_VIEWS, create_views, drop_views, refresh_views
 from models import Base
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -55,8 +55,8 @@ def engine() -> Engine:
         pytest.skip("PostgreSQL indisponible — test d'intégration ignoré")
     Base.metadata.create_all(eng)  # idempotent : crée les tables manquantes
     with eng.begin() as connection:  # vues matérialisées (recréées : reflètent la définition)
-        drop_views(connection)
-        create_views(connection)
+        drop_views(connection, ALL_VIEWS)
+        create_views(connection, ALL_VIEWS)
     return eng
 
 

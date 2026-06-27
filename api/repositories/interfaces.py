@@ -6,6 +6,8 @@ Les services dépendent de ces `Protocol`, pas de SQLAlchemy
 from dataclasses import dataclass
 from typing import Protocol
 
+from models import Trajet
+
 
 @dataclass(frozen=True)
 class OverviewAggregates:
@@ -60,3 +62,63 @@ class StatsRepository(Protocol):
     def top_operateurs(self, limit: int) -> list[OperateurCount]: ...
 
     def departs(self) -> list[DepartAggregate]: ...
+
+
+@dataclass(frozen=True)
+class LiaisonAggregate:
+    """Liaison origine→destination agrégée (volume, part de nuit, moyennes)."""
+
+    departure_city: str
+    departure_lat: float
+    departure_lon: float
+    arrival_city: str
+    arrival_lat: float
+    arrival_lon: float
+    nb_trajets: int
+    nb_nuit: int
+    distance_moy_km: float | None
+    co2_moy_par_pkm: float | None
+
+
+@dataclass(frozen=True)
+class TrajetFilter:
+    """Critères de filtrage de la table des trajets (couche domaine)."""
+
+    mode: str | None = None
+    is_night: bool | None = None
+    departure_city: str | None = None
+    arrival_city: str | None = None
+    agency_name: str | None = None
+    departure_country: str | None = None
+    arrival_country: str | None = None
+    distance_min_km: float | None = None
+    distance_max_km: float | None = None
+
+
+@dataclass(frozen=True)
+class DistanceBinAggregate:
+    """Tranche de distance avec décompte jour/nuit."""
+
+    min_km: float
+    max_km: float
+    count_jour: int
+    count_nuit: int
+
+
+class TrajetRepository(Protocol):
+    """Accès aux trajets de l'onglet « Explorateur de trajets »."""
+
+    def top_liaisons(self, limit: int) -> list[LiaisonAggregate]: ...
+
+    def list_trajets(
+        self,
+        criteria: TrajetFilter,
+        sort_field: str,
+        sort_desc: bool,
+        page: int,
+        page_size: int,
+    ) -> tuple[list[Trajet], int]: ...
+
+    def distance_histogram(self, bin_km: int) -> list[DistanceBinAggregate]: ...
+
+    def get_trajet(self, trajet_id: int) -> Trajet | None: ...

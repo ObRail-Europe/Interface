@@ -10,7 +10,7 @@ from collections.abc import Sequence
 
 from alembic import op
 
-from etl.views import create_views, drop_views
+from etl.views import OVERVIEW_VIEWS, create_views, drop_views
 
 # revision identifiers, used by Alembic.
 revision: str = "c362f25f3dc3"
@@ -21,9 +21,9 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     """Crée les vues matérialisées de l'onglet Vue d'ensemble + leurs index uniques."""
-    create_views(op.get_bind())
+    create_views(op.get_bind(), OVERVIEW_VIEWS)
 
 
 def downgrade() -> None:
     """Supprime les vues matérialisées."""
-    drop_views(op.get_bind())
+    drop_views(op.get_bind(), OVERVIEW_VIEWS)

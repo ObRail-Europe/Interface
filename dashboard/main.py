@@ -1,19 +1,24 @@
 """Point d'entrée du dashboard ObRail (Dash).
 
-`create_app()` assemble la fabrique (client API injecté, onglets, callbacks).
+`create_app()` assemble la fabrique (clients API injectés, onglets, callbacks).
 `server` est exposé pour gunicorn (`gunicorn main:server`).
 """
 
 from dash import Dash, dcc, html
 
-from api.client import HttpOverviewClient
+from api.explorer_client import HttpExplorerClient
+from api.overview_client import HttpOverviewClient
 from config import settings
-from pages import overview
+from pages import explorer, overview
 
 
 def create_app() -> Dash:
-    app = Dash(__name__, title="ObRail — Dashboard")
-    client = HttpOverviewClient(settings.api_url)
+    # suppress_callback_exceptions : les composants d'un onglet ne sont dans le DOM
+    # que lorsqu'il est ouvert (callbacks par onglet déclenchés à l'ouverture).
+    app = Dash(__name__, title="ObRail — Dashboard", suppress_callback_exceptions=True)
+
+    overview_client = HttpOverviewClient(settings.api_url)
+    explorer_client = HttpExplorerClient(settings.api_url)
 
     app.layout = html.Div(
         className="app",
@@ -24,11 +29,17 @@ def create_app() -> Dash:
                 value="overview",
                 children=[
                     dcc.Tab(label="Vue d'ensemble", value="overview", children=overview.layout()),
+                    dcc.Tab(
+                        label="Explorateur de trajets",
+                        value="explorer",
+                        children=explorer.layout(),
+                    ),
                 ],
             ),
         ],
     )
-    overview.register_callbacks(app, client)
+    overview.register_callbacks(app, overview_client)
+    explorer.register_callbacks(app, explorer_client)
     return app
 
 

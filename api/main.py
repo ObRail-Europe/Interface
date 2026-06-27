@@ -3,7 +3,7 @@
 from fastapi import FastAPI
 
 from config import settings
-from routers import stats
+from routers import stats, trajets
 
 
 def create_app() -> FastAPI:
@@ -14,6 +14,7 @@ def create_app() -> FastAPI:
         description="API REST ObRail Europe",
     )
     app.include_router(stats.router)
+    app.include_router(trajets.router)
 
     @app.get("/health", tags=["infra"])
     def health() -> dict[str, str]:
