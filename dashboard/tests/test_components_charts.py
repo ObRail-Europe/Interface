@@ -196,10 +196,13 @@ _DISTRIBUTION = {
 def test_co2_distribution_box_one_box_per_mode() -> None:
     fig = co2_distribution_box(_DISTRIBUTION)
     assert len(fig.data) == 2  # un box par mode
-    train = fig.data[0]
+    train, avion = fig.data[0], fig.data[1]
     assert train.name == "Train"
     assert list(train.median) == [3.0]
     assert list(train.q1) == [2.0] and list(train.q3) == [4.0]
+    # Catégories x distinctes : les box ne se superposent pas.
+    assert list(train.x) == ["Train"]
+    assert list(avion.x) == ["Avion"]
 
 
 def test_co2_distribution_box_empty_does_not_crash() -> None:

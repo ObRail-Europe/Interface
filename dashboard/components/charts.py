@@ -224,9 +224,11 @@ def co2_distribution_box(distribution: dict[str, Any]) -> go.Figure:
     fig = go.Figure()
     for mode in distribution["modes"]:
         key = mode["mode"]
+        label = labels.get(key, key)
         fig.add_trace(
             go.Box(
-                name=labels.get(key, key),
+                name=label,
+                x=[label],  # une catégorie distincte par mode (sinon les box se superposent)
                 q1=[mode["q1"]],
                 median=[mode["mediane"]],
                 q3=[mode["q3"]],
