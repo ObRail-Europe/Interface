@@ -170,7 +170,7 @@ Documentation interactive de l'API : **Swagger** sur `http://localhost:8000/docs
 **Vues & index** : la **carte** (`mv_liaisons`) et l'**histogramme** (`mv_distance_hist`) lisent
 des vues matérialisées (agrégats *train-only* précalculés, index unique pour le refresh concurrent).
 La **table** et le **détail** manipulent de la donnée ligne à ligne : ils s'appuient sur les **index
-existants** de `trajets` (filtres) et la **clé primaire** (détail) — pas de vue ni d'index superflu.
+existants** de `trajets` (filtres) et la **clé primaire** (détail) - pas de vue ni d'index superflu.
 
 ## Onglet « Empreinte carbone » (V5)
 
@@ -187,9 +187,25 @@ documenté et affiché** (défaut `230 g/pkm`, ordre de grandeur ADEME/EEA pour 
 surchargeable par requête. L'estimation avion applique ce facteur aux **voyageur-km** parcourus en train.
 
 **Vues & index** : les trois endpoints lisent des **vues matérialisées** (`mv_co2_comparaison`,
-`mv_carbon_density`, `mv_co2_distribution`) — agrégats train/avion (totaux par tranche, histogramme 2D,
+`mv_carbon_density`, `mv_co2_distribution`) - agrégats train/avion (totaux par tranche, histogramme 2D,
 quartiles) **précalculés** sur ~13M trajets, chacune dotée d'un **index unique** pour le refresh concurrent.
 Le front ne reçoit que des agrégats, jamais les points bruts.
+
+## Onglet « Territoires & couverture ferroviaire » (V6)
+
+Question centrale : **qui est bien / mal desservi ?**
+
+| Viz | Endpoint API | Visualisation |
+| --- | --- | --- |
+| V6.1 Carte de la couverture | `GET /api/v1/villes/carte` (`dimension`, `code_dept`, `code_region`, `has_gare`) | carte des communes (couleur = dimension au choix, taille ∝ population) |
+| V6.2 Couverture par maille | `GET /api/v1/stats/couverture?by=code_dept\|code_region` | barres triées par desserte, couleur = taux de communes avec gare |
+| V6.4 Amplitude de service | `GET /api/v1/stats/amplitude?bin_h=1` | histogramme de l'amplitude moyenne + part desservie après minuit |
+
+**Vues & index** : pas de vue matérialisée ici - la source est la table **`villes` (~10k communes)** avec des
+métriques **déjà pré-calculées** (`nb_trajets_total`, `amplitude_moy_h`, `accessibilite_ord`…) ; les lectures et
+agrégations (par maille, histogramme) sont donc directes et triviales. Les colonnes filtrées (`code_dept`,
+`code_region`, `has_gare`) sont **déjà indexées** au schéma - pas d'index superflu. (Une vue matérialisée se
+justifie pour agréger les ~13M trajets, pas pour 10k communes.)
 
 ## Qualité & workflow
 
@@ -203,11 +219,12 @@ Le front ne reçoit que des agrégats, jamais les points bruts.
 
 **Réalisé** : socle conteneurisé, schéma + ETL (ingestion & résolution des jointures),
 **onglet Vue d'ensemble** (KPI, jour/nuit, opérateurs, départs), **onglet Explorateur de
-trajets** (liaisons, table, histogramme, détail) et **onglet Empreinte carbone**
-(CO₂ évité vs avion, densité distance × intensité, distribution par mode).
+trajets** (liaisons, table, histogramme, détail), **onglet Empreinte carbone**
+(CO₂ évité vs avion, densité distance × intensité, distribution par mode) et
+**onglet Territoires & couverture** (carte des communes, couverture par maille, amplitude de service).
 
 **À venir** :
 
 - **Onglets** : Jour/Nuit (détaillé), Opérateurs,
-  Territoires & couverture, Fragilité/Clusters, Qualité des données, Supervision.
+  Fragilité/Clusters, Qualité des données, Supervision.
 - **Monitoring** : Prometheus + Grafana. **Tests E2E** : Playwright.

@@ -1,4 +1,4 @@
-"""Composants graphiques de l'onglet Vue d'ensemble (fonctions pures → figure Plotly)."""
+"""Composants graphiques du dashboard (fonctions pures → figure Plotly)."""
 
 from typing import Any
 
@@ -7,6 +7,13 @@ import plotly.graph_objects as go
 from theme import COLOR_AVION, COLOR_JOUR, COLOR_NUIT, COLOR_TRAIN
 
 _MARGIN = {"t": 50, "b": 10, "l": 10, "r": 10}
+
+_GEO_EUROPE = {
+    "scope": "europe",
+    "center": {"lat": 46.6, "lon": 2.4},
+    "projection_scale": 4.5,
+    "showcountries": True,
+}
 
 
 def jour_nuit_donut(split: dict[str, Any]) -> go.Figure:
@@ -265,5 +272,95 @@ def distance_histogram(histogram: dict[str, Any]) -> go.Figure:
         yaxis_title="Trajets",
         margin=_MARGIN,
         legend={"orientation": "h"},
+    )
+    return fig
+
+
+def couverture_map(points: list[dict[str, Any]], dimension_label: str) -> go.Figure:
+    """Carte de la couverture ferroviaire (V6.1) : couleur = dimension, taille ∝ population."""
+    pops = [point["population"] or 0 for point in points]
+    max_pop = max(pops) if pops else 1
+    # Valeur ramenée en milliers (lisibilité de la colorbar)
+    valeurs = [(point["valeur"] or 0) / 1000 for point in points]
+    fig = go.Figure(
+        go.Scattergeo(
+            lat=[point["geo"]["lat"] for point in points],
+            lon=[point["geo"]["lon"] for point in points],
+            text=[
+                f"{point['city_name']} — {dimension_label} : {valeur:.2f}"
+                for point, valeur in zip(points, valeurs, strict=True)
+            ],
+            hoverinfo="text",
+            marker={
+                "color": valeurs,
+                "colorscale": "Viridis",
+                "showscale": True,
+                "colorbar": {"title": dimension_label},
+                "size": pops,
+                "sizemode": "area",
+                "sizeref": 2 * max_pop / (30**2),
+                "sizemin": 3,
+            },
+        )
+    )
+    fig.update_layout(
+        title="Couverture ferroviaire des communes",
+        geo=_GEO_EUROPE,
+        margin=_MARGIN,
+    )
+    return fig
+
+
+def couverture_bars(couverture: dict[str, Any], limit: int = 20) -> go.Figure:
+    """Couverture par maille (V6.2) : barres triées par desserte, couleur = taux de gare."""
+    rows = list(reversed(couverture["mailles"][:limit]))  # mieux desservi en haut
+    maille = "région" if couverture["by"] == "code_region" else "département"
+    fig = go.Figure(
+        go.Bar(
+            x=[m["nb_trajets_total"] for m in rows],
+            y=[m["cle"] for m in rows],
+            orientation="h",
+            marker={
+                "color": [m["taux_avec_gare"] for m in rows],
+                "colorscale": "Viridis",
+                "showscale": True,
+                "colorbar": {"title": "Taux gare"},
+                "cmin": 0,
+                "cmax": 1,
+            },
+            customdata=[[m["nb_communes"], m["taux_avec_gare"]] for m in rows],
+            hovertemplate=(
+                "%{y} — %{x} trajets · %{customdata[0]} communes · "
+                "gare %{customdata[1]:.0%}<extra></extra>"
+            ),
+        )
+    )
+    fig.update_layout(
+        title=f"Desserte par {maille} (top {limit})",
+        xaxis_title="Trajets desservis",
+        yaxis_title=maille.capitalize(),
+        margin=_MARGIN,
+    )
+    return fig
+
+
+def amplitude_hist(distribution: dict[str, Any]) -> go.Figure:
+    """Distribution de l'amplitude de service (V6.4) ; part desservie après minuit en sous-titre."""
+    bins = distribution["bins"]
+    part = distribution["part_apres_minuit"]
+    fig = go.Figure(
+        go.Bar(
+            x=[b["min_h"] for b in bins],
+            y=[b["nb_communes"] for b in bins],
+            marker_color=COLOR_NUIT,
+            hovertemplate="%{x}–%{customdata} h : %{y} communes<extra></extra>",
+            customdata=[b["max_h"] for b in bins],
+        )
+    )
+    fig.update_layout(
+        title=f"Amplitude de service · {part:.0%} des communes desservies après minuit",
+        xaxis_title="Amplitude moyenne (h)",
+        yaxis_title="Communes",
+        margin=_MARGIN,
     )
     return fig

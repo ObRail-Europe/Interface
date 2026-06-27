@@ -167,3 +167,65 @@ class CarbonRepository(Protocol):
     def carbon_density(self) -> list[CarbonDensityCell]: ...
 
     def co2_distribution(self) -> list[ModeDistributionAggregate]: ...
+
+
+@dataclass(frozen=True)
+class VilleGeoAggregate:
+    """Commune géolocalisée et la valeur de la dimension cartographiée."""
+
+    citycode: str
+    city_name: str
+    lat: float
+    lon: float
+    population: float | None
+    valeur: float | None
+    has_gare: bool | None
+
+
+@dataclass(frozen=True)
+class CouvertureMailleAggregate:
+    """Couverture agrégée d'une maille (département ou région)."""
+
+    cle: str
+    nb_communes: int
+    taux_avec_gare: float
+    nb_trajets_total: int
+    accessibilite_moy: float | None
+
+
+@dataclass(frozen=True)
+class AmplitudeBinAggregate:
+    """Tranche d'amplitude de service (heures) et nombre de communes."""
+
+    min_h: float
+    max_h: float
+    nb_communes: int
+
+
+@dataclass(frozen=True)
+class AmplitudeAggregate:
+    """Distribution de l'amplitude de service + part des communes desservies après minuit."""
+
+    bins: list[AmplitudeBinAggregate]
+    part_apres_minuit: float
+
+
+class TerritoireRepository(Protocol):
+    """Accès aux données de l'onglet « Territoires & couverture ».
+
+    La source est la table `villes` (~10k lignes, colonnes pré-calculées) : les lectures
+    sont directes - pas de vue matérialisée (sur-dimensionnée ici), et les colonnes
+    filtrées (`code_dept`, `code_region`, `has_gare`) sont déjà indexées au schéma.
+    """
+
+    def villes_carte(
+        self,
+        dimension: str,
+        code_dept: str | None,
+        code_region: str | None,
+        has_gare: bool | None,
+    ) -> list[VilleGeoAggregate]: ...
+
+    def couverture(self, by: str) -> list[CouvertureMailleAggregate]: ...
+
+    def amplitude(self, bin_h: float) -> AmplitudeAggregate: ...
