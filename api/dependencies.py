@@ -11,8 +11,10 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from repositories.carbon_repository import SqlAlchemyCarbonRepository
+from repositories.cluster_repository import SqlAlchemyClusterRepository
 from repositories.interfaces import (
     CarbonRepository,
+    ClusterRepository,
     StatsRepository,
     TerritoireRepository,
     TrajetRepository,
@@ -22,6 +24,7 @@ from repositories.territoire_repository import SqlAlchemyTerritoireRepository
 from repositories.trajet_repository import SqlAlchemyTrajetRepository
 from services.carbon_service import CarbonService
 from services.explorer_service import ExplorerService
+from services.fragilite_service import FragiliteService
 from services.overview_service import OverviewService
 from services.territoire_service import TerritoireService
 
@@ -66,3 +69,13 @@ def get_territoire_service(
     repository: Annotated[TerritoireRepository, Depends(get_territoire_repository)],
 ) -> TerritoireService:
     return TerritoireService(repository)
+
+
+def get_cluster_repository(session: Annotated[Session, Depends(get_db)]) -> ClusterRepository:
+    return SqlAlchemyClusterRepository(session)
+
+
+def get_fragilite_service(
+    repository: Annotated[ClusterRepository, Depends(get_cluster_repository)],
+) -> FragiliteService:
+    return FragiliteService(repository)

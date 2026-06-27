@@ -4,7 +4,7 @@ from typing import Any
 
 import plotly.graph_objects as go
 
-from theme import COLOR_AVION, COLOR_JOUR, COLOR_NUIT, COLOR_TRAIN
+from theme import COLOR_AVION, COLOR_CLUSTERS, COLOR_JOUR, COLOR_NUIT, COLOR_TRAIN
 
 _MARGIN = {"t": 50, "b": 10, "l": 10, "r": 10}
 
@@ -362,5 +362,110 @@ def amplitude_hist(distribution: dict[str, Any]) -> go.Figure:
         xaxis_title="Amplitude moyenne (h)",
         yaxis_title="Communes",
         margin=_MARGIN,
+    )
+    return fig
+
+
+def _cluster_color(cluster: int) -> str:
+    return COLOR_CLUSTERS[cluster % len(COLOR_CLUSTERS)]
+
+
+def clusters_map(points: list[dict[str, Any]]) -> go.Figure:
+    """Carte des clusters de fragilité (V7.1) : une trace par cluster (couleur + légende)."""
+    by_cluster: dict[tuple[int, str], list[dict[str, Any]]] = {}
+    for point in points:
+        key = (point["cluster"], point["cluster_nom"] or f"cluster {point['cluster']}")
+        by_cluster.setdefault(key, []).append(point)
+
+    fig = go.Figure()
+    for cluster, nom in sorted(by_cluster):
+        pts = by_cluster[(cluster, nom)]
+        fig.add_trace(
+            go.Scattergeo(
+                lat=[p["geo"]["lat"] for p in pts],
+                lon=[p["geo"]["lon"] for p in pts],
+                text=[f"{p['city_name']} — {nom} ({p['niveau_fragilite']})" for p in pts],
+                hoverinfo="text",
+                mode="markers",
+                name=nom,
+                marker={"size": 5, "color": _cluster_color(cluster), "opacity": 0.6},
+            )
+        )
+    fig.update_layout(
+        title="Clusters de fragilité territoriale",
+        geo=_GEO_EUROPE,
+        margin=_MARGIN,
+        legend={"orientation": "h"},
+    )
+    return fig
+
+
+def cluster_effectifs_bars(summaries: list[dict[str, Any]]) -> go.Figure:
+    """Effectifs des clusters (V7.4) : barres horizontales, couleur par cluster."""
+    rows = list(reversed(summaries))
+    fig = go.Figure(
+        go.Bar(
+            x=[s["effectif"] for s in rows],
+            y=[s["cluster_nom"] or f"cluster {s['cluster']}" for s in rows],
+            orientation="h",
+            marker_color=[_cluster_color(s["cluster"]) for s in rows],
+            customdata=[s["niveau_fragilite"] for s in rows],
+            hovertemplate="%{y} — %{x} communes · fragilité %{customdata}<extra></extra>",
+        )
+    )
+    fig.update_layout(
+        title="Effectifs des clusters",
+        xaxis_title="Communes",
+        margin=_MARGIN,
+    )
+    return fig
+
+
+# Libellés courts et lisibles des features de profil (axes des coordonnées parallèles).
+_FEATURE_LABELS = {
+    "revenu_median_uc": "Revenu",
+    "taux_sans_voiture": "Sans voiture",
+    "part_65plus": "65 ans +",
+    "densite_pop_km2": "Densité",
+    "nb_trajets_total": "Trajets",
+    "dist_gare_min_m": "Dist. gare",
+}
+
+
+def cluster_profils_parallel(profils: list[dict[str, Any]]) -> go.Figure:
+    """Profils des clusters (V7.2) : coordonnées parallèles des features normalisées 0–1."""
+    if not profils:
+        return go.Figure()
+    names = [f["nom"] for f in profils[0]["features"]]
+    # Ne garder que les features renseignées.
+    kept = [
+        i
+        for i, _ in enumerate(names)
+        if any(p["features"][i]["moyenne_normalisee"] is not None for p in profils)
+    ]
+    dimensions = [
+        {
+            "label": _FEATURE_LABELS.get(names[i], names[i]),
+            "range": [0, 1],
+            "values": [(p["features"][i]["moyenne_normalisee"] or 0) for p in profils],
+        }
+        for i in kept
+    ]
+    fig = go.Figure(
+        go.Parcoords(
+            line={
+                "color": [p["cluster"] for p in profils],
+                "colorscale": "Viridis",
+                "showscale": True,
+                "colorbar": {"title": "Cluster"},
+            },
+            dimensions=dimensions,
+            labelangle=0,
+        )
+    )
+    # Marge haute généreuse : sépare le titre des libellés d'axes (sinon ils se chevauchent).
+    fig.update_layout(
+        title={"text": "Profils des clusters (features normalisées 0–1)", "y": 0.98},
+        margin={"t": 90, "b": 40, "l": 70, "r": 70},
     )
     return fig

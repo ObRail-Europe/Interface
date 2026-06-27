@@ -229,3 +229,53 @@ class TerritoireRepository(Protocol):
     def couverture(self, by: str) -> list[CouvertureMailleAggregate]: ...
 
     def amplitude(self, bin_h: float) -> AmplitudeAggregate: ...
+
+
+@dataclass(frozen=True)
+class ClusterGeoAggregate:
+    """Commune géolocalisée et son cluster de fragilité (V7.1)."""
+
+    citycode: str | None
+    city_name: str
+    lat: float
+    lon: float
+    cluster: int
+    cluster_nom: str | None
+    niveau_fragilite: str | None
+
+
+@dataclass(frozen=True)
+class ClusterSummaryAggregate:
+    """Effectif et libellés d'un cluster (V7.4)."""
+
+    cluster: int
+    cluster_nom: str | None
+    niveau_fragilite: str | None
+    effectif: int
+
+
+@dataclass(frozen=True)
+class ClusterProfilAggregate:
+    """Profil d'un cluster : effectif + moyennes brutes par feature (V7.2)."""
+
+    cluster: int
+    cluster_nom: str | None
+    niveau_fragilite: str | None
+    effectif: int
+    feature_means: dict[str, float | None]
+
+
+class ClusterRepository(Protocol):
+    """Accès aux données de l'onglet « Fragilité territoriale ».
+
+    Source : table `clusters` (~10k lignes, déjà indexée sur `cluster`,
+    `niveau_fragilite`, `citycode`).
+    """
+
+    def clusters_carte(
+        self, code_dept: str | None, code_region: str | None, has_gare: bool | None
+    ) -> list[ClusterGeoAggregate]: ...
+
+    def cluster_summaries(self) -> list[ClusterSummaryAggregate]: ...
+
+    def cluster_profils(self, features: list[str]) -> list[ClusterProfilAggregate]: ...
