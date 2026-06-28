@@ -18,10 +18,12 @@ from repositories.cluster_repository import SqlAlchemyClusterRepository
 from repositories.interfaces import (
     CarbonRepository,
     ClusterRepository,
+    QualiteRepository,
     StatsRepository,
     TerritoireRepository,
     TrajetRepository,
 )
+from repositories.qualite_repository import SqlAlchemyQualiteRepository
 from repositories.stats_repository import SqlAlchemyStatsRepository
 from repositories.territoire_repository import SqlAlchemyTerritoireRepository
 from repositories.trajet_repository import SqlAlchemyTrajetRepository
@@ -29,6 +31,7 @@ from services.carbon_service import CarbonService
 from services.explorer_service import ExplorerService
 from services.fragilite_service import FragiliteService
 from services.overview_service import OverviewService
+from services.qualite_service import QualiteService
 from services.territoire_service import TerritoireService
 
 
@@ -82,6 +85,16 @@ def get_fragilite_service(
     repository: Annotated[ClusterRepository, Depends(get_cluster_repository)],
 ) -> FragiliteService:
     return FragiliteService(repository)
+
+
+def get_qualite_repository(session: Annotated[Session, Depends(get_db)]) -> QualiteRepository:
+    return SqlAlchemyQualiteRepository(session)
+
+
+def get_qualite_service(
+    repository: Annotated[QualiteRepository, Depends(get_qualite_repository)],
+) -> QualiteService:
+    return QualiteService(repository)
 
 
 @lru_cache(maxsize=1)
