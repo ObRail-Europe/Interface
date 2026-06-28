@@ -6,6 +6,7 @@ from collections.abc import Awaitable, Callable
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from config import settings
 from exceptions import ObRailError
@@ -14,6 +15,9 @@ from routers import carbone, clusters, qualite, stats, territoires, trajets
 
 logger = logging.getLogger("obrail.api")
 _request_logger = logging.getLogger("obrail.request")
+
+# Sondes infra non journalisées en détail.
+_QUIET_PATHS = {"/health", "/metrics"}
 
 
 def create_app() -> FastAPI:
@@ -34,7 +38,12 @@ def create_app() -> FastAPI:
         start = time.perf_counter()
         response = await call_next(request)
         duration_ms = round((time.perf_counter() - start) * 1000, 1)
-        level = logging.WARNING if response.status_code >= 500 else logging.INFO
+        if response.status_code >= 500:
+            level = logging.WARNING
+        elif request.url.path in _QUIET_PATHS:
+            level = logging.DEBUG
+        else:
+            level = logging.INFO
         _request_logger.log(
             level,
             "request",
@@ -75,6 +84,9 @@ def create_app() -> FastAPI:
     def health() -> dict[str, str]:
         """Sonde de liveness."""
         return {"status": "ok"}
+
+    # Métriques Prometheus (latence, taux d'erreurs, volumes) exposées sur /metrics.
+    Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
 
     logger.info("application ready", extra={"code": "startup"})
     return app
