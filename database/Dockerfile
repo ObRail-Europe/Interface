@@ -16,7 +16,7 @@ COPY database/pyproject.toml database/uv.lock ./
 RUN uv sync --frozen --no-install-project --no-dev
 COPY database/ .
 RUN mkdir -p /app/data
-COPY data/*.csv /app/data/
+COPY data/*.csv data/*.parquet /app/data/
 RUN uv sync --frozen --no-dev
 
 # Exécution en utilisateur non-root.
