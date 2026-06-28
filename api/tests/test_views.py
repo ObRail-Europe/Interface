@@ -44,3 +44,37 @@ def test_co2_distribution_view_has_both_modes(carbon_session: Session) -> None:
     by_mode = {row.mode: row.co2_median for row in rows}
     assert set(by_mode) == {"flight", "train"}
     assert by_mode["train"] < by_mode["flight"]  # le train émet bien moins par pkm
+
+
+QUALITE_VIEWS = {"mv_qualite_completude", "mv_qualite_anomalies", "mv_qualite_volumetrie"}
+
+
+def test_qualite_views_exist(engine: Engine) -> None:
+    with engine.connect() as connection:
+        names = {row[0] for row in connection.execute(text("SELECT matviewname FROM pg_matviews"))}
+    assert QUALITE_VIEWS <= names
+
+
+def test_completude_view_reflects_seed(seeded_session: Session) -> None:
+    rows = seeded_session.execute(
+        text(
+            "SELECT colonne, nb_nuls, nb_lignes FROM mv_qualite_completude "
+            "WHERE source_table = 'trajets'"
+        )
+    ).all()
+    by_col = {row.colonne: row for row in rows}
+    assert by_col["id"].nb_lignes == 15  # 15 trajets dans le seed
+    assert by_col["id"].nb_nuls == 0  # clé primaire toujours renseignée
+    assert by_col["arrival_citycode"].nb_nuls == 4  # 11 arrivées résolues / 15
+
+
+def test_qualite_anomalies_and_volumetrie(seeded_session: Session) -> None:
+    anomalies = {
+        row.type: row.nb
+        for row in seeded_session.execute(text("SELECT type, nb FROM mv_qualite_anomalies")).all()
+    }
+    assert anomalies["arrivee_non_resolue"] == 4
+    assert anomalies["cluster_non_rattache"] == 1  # « Nulle Part »
+
+    total = seeded_session.execute(text("SELECT sum(nb) AS n FROM mv_qualite_volumetrie")).scalar()
+    assert total == 15
