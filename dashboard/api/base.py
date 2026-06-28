@@ -14,3 +14,8 @@ class BaseHttpClient:
         response = requests.get(f"{self._base_url}{path}", timeout=self._timeout)
         response.raise_for_status()
         return response.json()
+
+    def _post(self, path: str, json: Any) -> Any:
+        response = requests.post(f"{self._base_url}{path}", json=json, timeout=self._timeout)
+        response.raise_for_status()
+        return response.json()

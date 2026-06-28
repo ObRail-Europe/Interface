@@ -1,9 +1,9 @@
-row_id,city_name,lat_insee,lon_insee,cluster,cluster_nom,niveau_fragilite,has_gare,accessibilite_ord,population,revenu_median_uc,part_65plus
-1,Paris,48.8566,2.3522,0,"c0 - Gare, pôle urbain dense",Élevée,1.0,3.0,2103778,30000,0.18
-2,Lyon,45.7600,4.8357,0,"c0 - Gare, pôle urbain dense",Faible,1.0,3.0,516092,24000,0.17
-3,Marseille,43.2965,5.3698,0,"c0 - Gare, pôle urbain dense",Modérée,1.0,3.0,861635,19000,0.20
-4,Chamonix-Mont-Blanc,45.9237,6.8694,2,"c2 - Pôle touristique de montagne",Faible-modérée,1.0,2.0,8611,26000,0.22
-5,Dijon,47.3220,5.0415,0,"c0 - Gare, pôle urbain dense",Faible,1.0,3.0,156920,21000,0.19
-6,Bordeaux,44.8378,-0.5792,0,"c0 - Gare, pôle urbain dense",Faible,1.0,3.0,257068,23000,0.16
-7,Lille,50.6292,3.0573,0,"c0 - Gare, pôle urbain dense",Modérée,1.0,3.0,232741,20000,0.15
-8,Nulle Part,10.0000,10.0000,1,"c1 - commune non rattachable",Élevée,0.0,0.0,100,10000,0.30
+row_id,city_name,lat_insee,lon_insee,cluster,cluster_nom,niveau_fragilite,has_gare,accessibilite_ord,population,revenu_median_uc,part_65plus,taux_sans_voiture,densite_pop_km2,nb_trajets_total,dist_gare_min_m
+1,Paris,48.8566,2.3522,0,"c0 - Gare, pôle urbain dense",Élevée,1.0,3.0,2103778,30000,0.18,0.65,20000,331694,308
+2,Lyon,45.7600,4.8357,0,"c0 - Gare, pôle urbain dense",Faible,1.0,3.0,516092,24000,0.17,0.30,10500,50213,1063
+3,Marseille,43.2965,5.3698,0,"c0 - Gare, pôle urbain dense",Modérée,1.0,3.0,861635,19000,0.20,0.25,3600,41099,2487
+4,Chamonix-Mont-Blanc,45.9237,6.8694,2,"c2 - Pôle touristique de montagne",Faible-modérée,1.0,2.0,8611,26000,0.22,0.10,90,900,800
+5,Dijon,47.3220,5.0415,0,"c0 - Gare, pôle urbain dense",Faible,1.0,3.0,156920,21000,0.19,0.22,3700,12000,500
+6,Bordeaux,44.8378,-0.5792,0,"c0 - Gare, pôle urbain dense",Faible,1.0,3.0,257068,23000,0.16,0.27,5400,22000,700
+7,Lille,50.6292,3.0573,0,"c0 - Gare, pôle urbain dense",Modérée,1.0,3.0,232741,20000,0.15,0.30,6700,26000,450
+8,Nulle Part,10.0000,10.0000,1,"c1 - commune non rattachable",Élevée,0.0,0.0,100,10000,0.30,0.40,50,0,99999

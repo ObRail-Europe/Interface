@@ -42,8 +42,11 @@ services:
     image: obrail-api
     environment:
       DATABASE_URL: *db-url
+      MODEL_DIR: /data # modèles .joblib
     ports:
       - "8000:8000"
+    volumes:
+      - ./data:/data:ro # lecture seule
     depends_on:
       db:
         condition: service_healthy

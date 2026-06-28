@@ -104,3 +104,37 @@
   color: #b00020;
   padding: 0.75rem;
 }
+
+.simulator {
+  background: var(--c-surface);
+  border-radius: 10px;
+  padding: 1rem 1.5rem;
+  margin-top: 1rem;
+}
+
+.sim-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.5rem 1rem;
+  margin: 0.5rem 0 1rem;
+}
+
+.sim-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.sim-field label {
+  font-size: 0.8rem;
+  color: var(--c-muted);
+}
+
+.simulator button {
+  background: #2e8b57;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}

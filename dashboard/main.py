@@ -7,11 +7,12 @@
 from dash import Dash, dcc, html
 
 from api.carbon_client import HttpCarbonClient
+from api.cluster_client import HttpClusterClient
 from api.explorer_client import HttpExplorerClient
 from api.overview_client import HttpOverviewClient
 from api.territoire_client import HttpTerritoireClient
 from config import settings
-from pages import carbon, explorer, overview, territoires
+from pages import carbon, explorer, fragilite, overview, territoires
 
 
 def create_app() -> Dash:
@@ -23,6 +24,7 @@ def create_app() -> Dash:
     explorer_client = HttpExplorerClient(settings.api_url)
     carbon_client = HttpCarbonClient(settings.api_url)
     territoire_client = HttpTerritoireClient(settings.api_url)
+    cluster_client = HttpClusterClient(settings.api_url)
 
     app.layout = html.Div(
         className="app",
@@ -48,6 +50,11 @@ def create_app() -> Dash:
                         value="territoires",
                         children=territoires.layout(),
                     ),
+                    dcc.Tab(
+                        label="Fragilité territoriale",
+                        value="fragilite",
+                        children=fragilite.layout(),
+                    ),
                 ],
             ),
         ],
@@ -56,6 +63,7 @@ def create_app() -> Dash:
     explorer.register_callbacks(app, explorer_client)
     carbon.register_callbacks(app, carbon_client)
     territoires.register_callbacks(app, territoire_client)
+    fragilite.register_callbacks(app, cluster_client)
     return app
 
 
