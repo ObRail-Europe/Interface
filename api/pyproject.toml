@@ -5,10 +5,10 @@ description = "API REST ObRail Europe - backend FastAPI (MSPR TPRE532)."
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "alembic>=1.18.4",
     "fastapi>=0.138.0",
     "joblib>=1.5.3",
     "numpy>=2.5.0",
+    "obrail-database",
     "prometheus-fastapi-instrumentator>=8.0.2",
     "psycopg[binary]>=3.3.4",
     "pydantic-settings>=2.14.2",
@@ -26,6 +26,9 @@ dev = [
 # Installe seulement les dépendances dans le venv.
 [tool.uv]
 package = false
+
+[tool.uv.sources]
+obrail-database = { path = "../database", editable = true }
 
 [tool.ruff]
 line-length = 100

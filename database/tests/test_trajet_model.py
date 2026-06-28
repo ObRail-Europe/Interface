@@ -4,7 +4,7 @@ from datetime import date
 
 from sqlalchemy.orm import Session
 
-from models import Trajet
+from obrail_database.models import Trajet
 
 EXPECTED_COLUMNS = {
     "id", "source", "trip_id", "mode", "destination", "trip_short_name",

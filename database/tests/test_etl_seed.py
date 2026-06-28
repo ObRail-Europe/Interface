@@ -3,7 +3,7 @@
 from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
-from models import Cluster, Trajet, Ville
+from obrail_database.models import Cluster, Trajet, Ville
 
 
 def test_seed_counts(seeded_session: Session) -> None:

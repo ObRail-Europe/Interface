@@ -6,7 +6,7 @@ Les services dépendent de ces `Protocol`, pas de SQLAlchemy
 from dataclasses import dataclass
 from typing import Protocol
 
-from models import Trajet
+from obrail_database.models import Trajet
 
 
 @dataclass(frozen=True)

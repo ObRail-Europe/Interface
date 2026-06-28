@@ -13,22 +13,23 @@ from pathlib import Path
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from config import settings
-from database import engine
-from etl.loaders import load_clusters, load_trajets, load_villes, truncate_all
-from etl.resolve import resolution_stats, resolve_clusters, resolve_trajets
-from etl.views import refresh_views
-from logging_config import configure_logging
-from models import Trajet
+from obrail_database.config import settings
+from obrail_database.engine import create_db_engine
+from obrail_database.etl.loaders import load_clusters, load_trajets, load_villes, truncate_all
+from obrail_database.etl.resolve import resolution_stats, resolve_clusters, resolve_trajets
+from obrail_database.etl.views import refresh_views
+from obrail_database.logging_config import configure_logging
+from obrail_database.models import Trajet
 
 logger = logging.getLogger("obrail.etl")
 
 # data/ à la racine du dépôt (ou /data dans le conteneur).
-DEFAULT_DATA_DIR = Path(__file__).resolve().parents[2] / "data"
+DEFAULT_DATA_DIR = Path(__file__).resolve().parents[4] / "data"
 
 
 def main() -> None:
     configure_logging(settings.log_level)
+    engine = create_db_engine()
     parser = argparse.ArgumentParser(description="Ingestion ETL ObRail")
     parser.add_argument("--data-dir", type=Path, default=DEFAULT_DATA_DIR)
     parser.add_argument("--trajets-limit", type=int, default=None, help="nb max de trajets")

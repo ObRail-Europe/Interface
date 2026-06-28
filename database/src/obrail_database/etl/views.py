@@ -17,7 +17,7 @@ from collections.abc import Iterable
 from sqlalchemy import text
 from sqlalchemy.engine import Connection, Engine
 
-from models import Cluster, Trajet, Ville
+from obrail_database.models import Cluster, Trajet, Ville
 
 # Tables auditées par l'onglet « Qualité des données » (nom public -> modèle ORM).
 _QUALITE_TABLES = {"trajets": Trajet, "villes": Ville, "clusters": Cluster}

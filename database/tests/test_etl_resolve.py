@@ -3,8 +3,8 @@
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
-from etl.resolve import resolve_clusters, resolve_trajets
-from models import Cluster, Trajet, Ville
+from obrail_database.etl.resolve import resolve_clusters, resolve_trajets
+from obrail_database.models import Cluster, Trajet, Ville
 
 
 def test_resolution_inter_sources(session: Session) -> None:

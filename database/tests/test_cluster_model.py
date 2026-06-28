@@ -2,7 +2,7 @@
 
 from sqlalchemy.orm import Session
 
-from models import Cluster
+from obrail_database.models import Cluster
 
 EXPECTED_COLUMNS = {
     "row_id", "city_name", "lat_insee", "lon_insee", "cluster", "cluster_nom",

@@ -7,8 +7,8 @@ from sqlalchemy import select, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
-from etl.loaders import load_clusters, load_trajets, load_villes
-from models import Cluster, Trajet, Ville
+from obrail_database.etl.loaders import load_clusters, load_trajets, load_villes
+from obrail_database.models import Cluster, Trajet, Ville
 
 
 def test_load_villes_casts_types(session: Session, tmp_path: Path) -> None:

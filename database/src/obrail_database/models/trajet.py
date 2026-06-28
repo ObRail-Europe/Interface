@@ -5,7 +5,7 @@ from datetime import date
 from sqlalchemy import BigInteger, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from models.base import Base
+from obrail_database.models.base import Base
 
 
 class Trajet(Base):

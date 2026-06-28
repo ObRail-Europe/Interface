@@ -12,8 +12,8 @@ from sqlalchemy import insert, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
-from etl.transform import row_to_mapping
-from models import Cluster, Trajet, Ville
+from obrail_database.etl.transform import row_to_mapping
+from obrail_database.models import Cluster, Trajet, Ville
 
 
 def _load_csv_orm(session: Session, model: type, csv_path: Path) -> int:

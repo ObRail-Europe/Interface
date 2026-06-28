@@ -10,7 +10,7 @@ from collections.abc import Sequence
 
 from alembic import op
 
-from etl.views import create_views, drop_views
+from obrail_database.etl.views import create_views, drop_views
 
 # revision identifiers, used by Alembic.
 revision: str = "9b7563d956dd"

@@ -6,7 +6,7 @@ Issu du modèle de clustering `cluster_fragilite.joblib`.
 from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from models.base import Base
+from obrail_database.models.base import Base
 
 
 class Cluster(Base):

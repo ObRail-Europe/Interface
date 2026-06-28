@@ -1,9 +1,9 @@
 """Implémentation SQLAlchemy de `TrajetRepository`."""
 
+from obrail_database.models import Trajet
 from sqlalchemy import Select, func, select, text
 from sqlalchemy.orm import Session
 
-from models import Trajet
 from repositories.interfaces import DistanceBinAggregate, LiaisonAggregate, TrajetFilter
 
 # Re-regroupe les bins de 25 km de mv_distance_hist selon le pas demandé.

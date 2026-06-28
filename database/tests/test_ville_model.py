@@ -6,7 +6,7 @@ Les tests d'intégration (round-trip ORM) nécessitent un PostgreSQL accessible 
 
 from sqlalchemy.orm import Session
 
-from models import Ville
+from obrail_database.models import Ville
 
 EXPECTED_COLUMNS = {
     "citycode", "city_name", "nom_insee", "lat_insee", "lon_insee",
