@@ -73,11 +73,3 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Clean up old sha-* images
-        uses: actions/delete-package-versions@v5
-        with:
-          package-name: 'obrail-${{ matrix.service }}'
-          package-type: 'container'
-          ignore-versions: '^(latest|v?\d+\.\d+\.\d+)$'
-          min-versions-to-keep: 1

@@ -29,10 +29,7 @@ services:
   # Provisionne le schéma (tables, index, vues) via Alembic puis se termine.
   # Image auto-portante : embarque aussi les CSV (utilisés par le service load).
   migrate:
-    image: obrail-database
-    build:
-      context: .
-      dockerfile: database/Dockerfile
+    image: ghcr.io/obrail-europe/obrail-database:0.1.0
     command: ["alembic", "upgrade", "head"]
     environment:
       DATABASE_URL: *db-url
@@ -43,7 +40,7 @@ services:
 
   # Ingestion des CSV embarqués dans l'image (idempotente : saute si la base n'est pas vide).
   load:
-    image: obrail-database
+    image: ghcr.io/obrail-europe/obrail-database:0.1.0
     command: ["python", "-m", "obrail_database.etl.run", "--data-dir", "/app/data"]
     environment:
       DATABASE_URL: *db-url
@@ -53,11 +50,7 @@ services:
     restart: "no"
 
   api:
-    image: obrail-api
-    # Contexte racine : l'image api embarque le module database (dépendance path).
-    build:
-      context: .
-      dockerfile: api/Dockerfile
+    image: ghcr.io/obrail-europe/obrail-api:0.1.0
     environment:
       DATABASE_URL: *db-url
       MODEL_DIR: /data # modèles .joblib
@@ -79,7 +72,7 @@ services:
       retries: 5
 
   dashboard:
-    build: ./dashboard
+    image: ghcr.io/obrail-europe/obrail-dashboard:0.1.0
     environment:
       API_URL: http://api:8000
       GRAFANA_URL: ${GRAFANA_URL:-http://localhost:3000} # panneaux Grafana embarqués
@@ -136,7 +129,7 @@ services:
   # Réingestion forcée des CSV embarqués (écrase les données existantes).
   #   docker compose --profile load run --rm force-load
   force-load:
-    image: obrail-database
+    image: ghcr.io/obrail-europe/obrail-database:0.1.0
     profiles: ["load"]
     command: ["python", "-m", "obrail_database.etl.run", "--data-dir", "/app/data", "--force"]
     environment:
