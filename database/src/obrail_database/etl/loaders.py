@@ -8,12 +8,12 @@
 import csv
 from pathlib import Path
 
+import polars as pl
 from sqlalchemy import func, insert, select, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
-import polars as pl
 
-from obrail_database.etl.transform import row_to_mapping, prepare_trajet_types
+from obrail_database.etl.transform import prepare_trajet_types, row_to_mapping
 from obrail_database.models import Cluster, Trajet, Ville
 
 
@@ -50,15 +50,12 @@ def load_trajets(engine: Engine, parquet_path: Path, limit: int | None = None) -
         df = pl.read_parquet(parquet_path)
 
     df = prepare_trajet_types(df)
-    
+
     connection_uri = engine.url.render_as_string(hide_password=False)
     connection_uri = connection_uri.replace("postgresql+psycopg://", "postgresql://")
 
     df.write_database(
-        table_name="trajets",
-        connection=connection_uri,
-        if_table_exists="append",
-        engine="adbc"
+        table_name="trajets", connection=connection_uri, if_table_exists="append", engine="adbc"
     )
 
 

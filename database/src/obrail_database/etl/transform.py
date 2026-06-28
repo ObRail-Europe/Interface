@@ -7,13 +7,17 @@ format `3.0`, dates GTFS `YYYYMMDD`, champs vides → `None`.
 from datetime import date, datetime
 from typing import Any
 
-from sqlalchemy import Boolean, Date, Float, Integer
-from sqlalchemy.types import TypeEngine
 from polars import (
     DataFrame as plDataFrame,
-    col as plCol,
+)
+from polars import (
     String as plString,
 )
+from polars import (
+    col as plCol,
+)
+from sqlalchemy import Boolean, Date, Float, Integer
+from sqlalchemy.types import TypeEngine
 
 # Valeurs textuelles interprétées comme « vrai ».
 _TRUE = {"true", "t", "1", "1.0", "yes", "vrai"}
@@ -48,11 +52,14 @@ def row_to_mapping(row: dict[str, str], model: type) -> dict[str, Any]:
         if col.name in row
     }
 
+
 def prepare_trajet_types(df: plDataFrame) -> plDataFrame:
-        return df.with_columns([
+    return df.with_columns(
+        [
             # Force la lecture en String, puis parse la date au format YYYYMMDD
             plCol("service_start_date").cast(plString).str.to_date("%Y%m%d", strict=False),
             plCol("service_end_date").cast(plString).str.to_date("%Y%m%d", strict=False),
             plCol("is_night_train").cast(plString).str.to_lowercase() == "true",
-            plCol("days_of_week").cast(plString).str.replace_all("\x00", "")
-        ])
+            plCol("days_of_week").cast(plString).str.replace_all("\x00", ""),
+        ]
+    )
