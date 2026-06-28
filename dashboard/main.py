@@ -10,9 +10,10 @@ from api.carbon_client import HttpCarbonClient
 from api.cluster_client import HttpClusterClient
 from api.explorer_client import HttpExplorerClient
 from api.overview_client import HttpOverviewClient
+from api.qualite_client import HttpQualiteClient
 from api.territoire_client import HttpTerritoireClient
 from config import settings
-from pages import carbon, explorer, fragilite, overview, territoires
+from pages import carbon, explorer, fragilite, overview, qualite, territoires
 
 
 def create_app() -> Dash:
@@ -25,6 +26,7 @@ def create_app() -> Dash:
     carbon_client = HttpCarbonClient(settings.api_url)
     territoire_client = HttpTerritoireClient(settings.api_url)
     cluster_client = HttpClusterClient(settings.api_url)
+    qualite_client = HttpQualiteClient(settings.api_url)
 
     app.layout = html.Div(
         className="app",
@@ -55,6 +57,11 @@ def create_app() -> Dash:
                         value="fragilite",
                         children=fragilite.layout(),
                     ),
+                    dcc.Tab(
+                        label="Qualité des données",
+                        value="qualite",
+                        children=qualite.layout(),
+                    ),
                 ],
             ),
         ],
@@ -64,6 +71,7 @@ def create_app() -> Dash:
     carbon.register_callbacks(app, carbon_client)
     territoires.register_callbacks(app, territoire_client)
     fragilite.register_callbacks(app, cluster_client)
+    qualite.register_callbacks(app, qualite_client)
     return app
 
 

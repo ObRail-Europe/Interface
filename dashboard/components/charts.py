@@ -24,6 +24,9 @@ _GEO_EUROPE = {
     "showcountries": True,
 }
 
+# Couleurs des sévérités d'anomalies (onglet Qualité).
+_SEVERITE_COLORS = {"info": "#3b82f6", "warn": "#e8a33d", "error": "#c0392b"}
+
 
 def jour_nuit_donut(split: dict[str, Any]) -> go.Figure:
     """Donut jour vs nuit (V1.2), part de nuit au centre."""
@@ -504,5 +507,69 @@ def cluster_profils_parallel(profils: list[dict[str, Any]]) -> go.Figure:
     fig.update_layout(
         title={"text": "Profils des clusters (features normalisées 0–1)", "y": 0.98},
         margin={"t": 90, "b": 40, "l": 70, "r": 70},
+    )
+    return fig
+
+
+def completude_bars(completude: dict[str, Any]) -> go.Figure:
+    """Complétude par colonne (V8.1) : barres horizontales (rouge = lacunaire → vert = complet)."""
+    colonnes = list(reversed(completude["colonnes"]))
+    taux = [c["taux_complet"] for c in colonnes]
+    fig = go.Figure(
+        go.Bar(
+            x=[t * 100 for t in taux],
+            y=[c["nom"] for c in colonnes],
+            orientation="h",
+            marker={"color": taux, "colorscale": "RdYlGn", "cmin": 0, "cmax": 1},
+            customdata=[c["nb_nuls"] for c in colonnes],
+            hovertemplate="%{y} — %{x:.1f} % complet · %{customdata} NULLs<extra></extra>",
+        )
+    )
+    fig.update_layout(
+        title=f"Complétude — {completude['table']} ({completude['nb_lignes']} lignes)",
+        xaxis_title="Complétude (%)",
+        xaxis={"range": [0, 100]},
+        margin={"t": 50, "b": 30, "l": 10, "r": 10},
+        height=max(300, 22 * len(colonnes)),
+    )
+    return fig
+
+
+def anomalies_bars(anomalies: dict[str, Any]) -> go.Figure:
+    """Anomalies & doublons (V8.2) : barres horizontales colorées par sévérité."""
+    rows = list(reversed(anomalies["anomalies"]))
+    fig = go.Figure(
+        go.Bar(
+            x=[a["nb"] for a in rows],
+            y=[a["libelle"] for a in rows],
+            orientation="h",
+            marker_color=[_SEVERITE_COLORS.get(a["severite"], "#999") for a in rows],
+            customdata=[a["severite"] for a in rows],
+            hovertemplate="%{y} — %{x} (%{customdata})<extra></extra>",
+        )
+    )
+    fig.update_layout(
+        title="Anomalies & doublons",
+        xaxis_title="Occurrences",
+        margin={"t": 50, "b": 30, "l": 10, "r": 10},
+    )
+    return fig
+
+
+def volumetrie_bars(volumetrie: dict[str, Any], limit: int = 15) -> go.Figure:
+    """Volumétrie par source (V8.4) : barres horizontales des plus gros volumes."""
+    rows = list(reversed(volumetrie["sources"][:limit]))
+    fig = go.Figure(
+        go.Bar(
+            x=[s["nb"] for s in rows],
+            y=[s["cle"] for s in rows],
+            orientation="h",
+            marker_color=COLOR_NUIT,
+        )
+    )
+    fig.update_layout(
+        title=f"Volumétrie par source (top {limit})",
+        xaxis_title="Trajets",
+        margin={"t": 50, "b": 30, "l": 10, "r": 10},
     )
     return fig

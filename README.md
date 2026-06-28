@@ -228,6 +228,22 @@ Question centrale : **quels territoires sont fragiles ? (modèle de clustering)*
 de la partition d'origine validée à **~99,98 %**. Les `.joblib` sont lus depuis `MODEL_DIR` (volume `./data` monté en
 lecture seule ; `503` propre si absents).
 
+## Onglet « Qualité des données » (V8)
+
+Question centrale : **peut-on faire confiance aux données ?**
+
+| Viz | Endpoint API | Visualisation |
+| --- | --- | --- |
+| V8.1 Complétude par colonne | `GET /api/v1/qualite/completude?table=trajets\|villes\|clusters` | barres horizontales du % de complétude (rouge → vert) |
+| V8.2 Anomalies & doublons | `GET /api/v1/qualite/anomalies` | barres colorées par sévérité (info / warn / error) |
+| V8.4 Volumétrie par source | `GET /api/v1/qualite/volumetrie` | barres du nombre de trajets par source |
+
+**Vues & index** : ici les audits **scannent les ~13M trajets** (NULLs par colonne, doublons `trip_id`, volumétrie
+par source) - une **vue matérialisée est donc justifiée** (à la différence des onglets Territoires/Fragilité sur 10k
+lignes). Trois vues (`mv_qualite_completude`, `mv_qualite_anomalies`, `mv_qualite_volumetrie`), chacune avec un index
+unique pour le refresh concurrent. La vue de complétude est **générée depuis les modèles ORM** (un seul scan par table
+via dé-pivot `VALUES`).
+
 ## Qualité & workflow
 
 - **CI** : GitHub Actions (`.github/workflows/ci.yml`) - lint, tests, build des images Docker.
@@ -242,12 +258,11 @@ lecture seule ; `503` propre si absents).
 **onglet Vue d'ensemble** (KPI, jour/nuit, opérateurs, départs), **onglet Explorateur de
 trajets** (liaisons, table, histogramme, détail), **onglet Empreinte carbone**
 (CO₂ évité vs avion, densité distance × intensité, distribution par mode),
-**onglet Territoires & couverture** (carte des communes, couverture par maille, amplitude de service)
-et **onglet Fragilité territoriale** (carte des clusters, effectifs, profils, répartition par maille,
-simulateur live).
+**onglet Territoires & couverture** (carte des communes, couverture par maille, amplitude de service),
+**onglet Fragilité territoriale** (carte des clusters, effectifs, profils, répartition par maille,
+simulateur live) et **onglet Qualité des données** (complétude, anomalies, volumétrie).
 
 **À venir** :
 
-- **Onglets** : Jour/Nuit (détaillé), Opérateurs,
-  Qualité des données, Supervision.
+- **Onglets** : Jour/Nuit (détaillé), Opérateurs, Supervision.
 - **Monitoring** : Prometheus + Grafana. **Tests E2E** : Playwright.

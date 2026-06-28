@@ -9,13 +9,43 @@ Chaque vue a un **index unique** : il garantit l'unicité de la clé et permet l
 
 Registre unique (réutilisé par les migrations Alembic, l'ETL et les tests). Chaque
 migration ne gère que les vues de son onglet (groupes `OVERVIEW_VIEWS`, `EXPLORER_VIEWS`,
-`CARBON_VIEWS`).
+`CARBON_VIEWS`, `QUALITE_VIEWS`).
 """
 
 from collections.abc import Iterable
 
 from sqlalchemy import text
 from sqlalchemy.engine import Connection, Engine
+
+from models import Cluster, Trajet, Ville
+
+# Tables auditées par l'onglet « Qualité des données » (nom public -> modèle ORM).
+_QUALITE_TABLES = {"trajets": Trajet, "villes": Ville, "clusters": Cluster}
+
+
+def _completude_block(table_name: str, model: type) -> str:
+    """Bloc SQL comptant les NULLs de chaque colonne d'une table (un seul scan).
+
+    Compte tous les NULLs en une passe, puis dé-pivote en lignes (colonne, nb_nuls)
+    via `VALUES` - bien plus efficace qu'un scan par colonne sur ~13M trajets.
+    """
+    cols = [c.name for c in model.__table__.columns]
+    null_counts = ", ".join(f"count(*) FILTER (WHERE {c} IS NULL) AS n_{c}" for c in cols)
+    values = ", ".join(f"('{c}', t.n_{c})" for c in cols)
+    return (
+        f"SELECT '{table_name}' AS source_table, v.colonne, v.nb_nuls, t.nb_lignes "
+        f"FROM (SELECT count(*) AS nb_lignes, {null_counts} FROM {table_name}) t "
+        f"CROSS JOIN LATERAL (VALUES {values}) AS v(colonne, nb_nuls)"
+    )
+
+
+def _completude_view_sql() -> str:
+    """Génère la vue de complétude (NULLs par colonne) pour les 3 tables."""
+    blocks = " UNION ALL ".join(
+        _completude_block(name, model) for name, model in _QUALITE_TABLES.items()
+    )
+    return f"CREATE MATERIALIZED VIEW IF NOT EXISTS mv_qualite_completude AS {blocks}"
+
 
 # nom de vue -> (SQL de création de la vue, SQL de l'index unique)
 _VIEW_DDL: dict[str, tuple[str, str]] = {
@@ -161,12 +191,51 @@ _VIEW_DDL: dict[str, tuple[str, str]] = {
         "CREATE UNIQUE INDEX IF NOT EXISTS ix_mv_co2_distribution_mode "
         "ON mv_co2_distribution (mode)",
     ),
+    # Onglet « Qualité des données » : audits plein-table sur ~13M trajets → précalcul.
+    "mv_qualite_completude": (
+        _completude_view_sql(),
+        "CREATE UNIQUE INDEX IF NOT EXISTS ix_mv_qualite_completude_col "
+        "ON mv_qualite_completude (source_table, colonne)",
+    ),
+    "mv_qualite_anomalies": (
+        """
+        CREATE MATERIALIZED VIEW IF NOT EXISTS mv_qualite_anomalies AS
+        SELECT * FROM (VALUES
+          ('trip_id_dupliques', 'trip_id partagés par plusieurs trajets',
+            (SELECT count(*) FROM (SELECT trip_id FROM trajets WHERE trip_id IS NOT NULL
+                GROUP BY trip_id HAVING count(*) > 1) d), 'warn'),
+          ('depart_non_resolu', 'Trajets sans commune de départ résolue',
+            (SELECT count(*) FROM trajets WHERE departure_citycode IS NULL), 'warn'),
+          ('arrivee_non_resolue', 'Trajets sans commune d''arrivée résolue',
+            (SELECT count(*) FROM trajets WHERE arrival_citycode IS NULL), 'warn'),
+          ('distance_manquante', 'Trajets sans distance renseignée',
+            (SELECT count(*) FROM trajets WHERE distance_km IS NULL), 'info'),
+          ('cluster_non_rattache', 'Communes (clusters) non rattachées à une ville',
+            (SELECT count(*) FROM clusters WHERE citycode IS NULL), 'info'),
+          ('ville_sans_coordonnees', 'Villes sans coordonnées géographiques',
+            (SELECT count(*) FROM villes WHERE lat_insee IS NULL OR lon_insee IS NULL), 'error')
+        ) AS a(type, libelle, nb, severite)
+        """,
+        "CREATE UNIQUE INDEX IF NOT EXISTS ix_mv_qualite_anomalies_type "
+        "ON mv_qualite_anomalies (type)",
+    ),
+    "mv_qualite_volumetrie": (
+        """
+        CREATE MATERIALIZED VIEW IF NOT EXISTS mv_qualite_volumetrie AS
+        SELECT coalesce(source, '(inconnu)') AS cle, count(*) AS nb
+        FROM trajets
+        GROUP BY coalesce(source, '(inconnu)')
+        """,
+        "CREATE UNIQUE INDEX IF NOT EXISTS ix_mv_qualite_volumetrie_cle "
+        "ON mv_qualite_volumetrie (cle)",
+    ),
 }
 
 OVERVIEW_VIEWS = ("mv_overview_kpi", "mv_operateurs", "mv_departs")
 EXPLORER_VIEWS = ("mv_liaisons", "mv_distance_hist")
 CARBON_VIEWS = ("mv_co2_comparaison", "mv_carbon_density", "mv_co2_distribution")
-ALL_VIEWS = OVERVIEW_VIEWS + EXPLORER_VIEWS + CARBON_VIEWS
+QUALITE_VIEWS = ("mv_qualite_completude", "mv_qualite_anomalies", "mv_qualite_volumetrie")
+ALL_VIEWS = OVERVIEW_VIEWS + EXPLORER_VIEWS + CARBON_VIEWS + QUALITE_VIEWS
 
 
 def create_views(connection: Connection, names: Iterable[str]) -> None:

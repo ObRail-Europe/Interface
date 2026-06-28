@@ -3,7 +3,7 @@
 from fastapi import FastAPI
 
 from config import settings
-from routers import carbone, clusters, stats, territoires, trajets
+from routers import carbone, clusters, qualite, stats, territoires, trajets
 
 
 def create_app() -> FastAPI:
@@ -18,6 +18,7 @@ def create_app() -> FastAPI:
     app.include_router(carbone.router)
     app.include_router(territoires.router)
     app.include_router(clusters.router)
+    app.include_router(qualite.router)
 
     @app.get("/health", tags=["infra"])
     def health() -> dict[str, str]:

@@ -289,3 +289,40 @@ class ClusterRepository(Protocol):
     def cluster_profils(self, features: list[str]) -> list[ClusterProfilAggregate]: ...
 
     def fragilite_par_maille(self, by: str) -> list[FragiliteMailleAggregate]: ...
+
+
+@dataclass(frozen=True)
+class ColonneCompletudeAggregate:
+    """Complétude d'une colonne : nombre de NULLs sur le total de lignes (V8.1)."""
+
+    colonne: str
+    nb_nuls: int
+    nb_lignes: int
+
+
+@dataclass(frozen=True)
+class AnomalieAggregate:
+    """Compteur d'un type d'anomalie (V8.2)."""
+
+    type: str
+    libelle: str
+    nb: int
+    severite: str
+
+
+@dataclass(frozen=True)
+class SourceVolumeAggregate:
+    """Volume de trajets d'une source (V8.4)."""
+
+    cle: str
+    nb: int
+
+
+class QualiteRepository(Protocol):
+    """Accès aux audits qualité (vues matérialisées sur ~13M trajets)."""
+
+    def completude(self, table: str) -> list[ColonneCompletudeAggregate]: ...
+
+    def anomalies(self) -> list[AnomalieAggregate]: ...
+
+    def volumetrie(self) -> list[SourceVolumeAggregate]: ...
