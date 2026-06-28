@@ -21,6 +21,8 @@ class ClusterClient(Protocol):
 
     def get_profils(self) -> list[dict[str, Any]]: ...
 
+    def predict(self, features: dict[str, Any]) -> dict[str, Any]: ...
+
 
 class HttpClusterClient(BaseHttpClient):
     """Implémentation HTTP basée sur `requests`."""
@@ -37,3 +39,6 @@ class HttpClusterClient(BaseHttpClient):
 
     def get_profils(self) -> list[dict[str, Any]]:
         return self._get("/api/v1/clusters/profils")
+
+    def predict(self, features: dict[str, Any]) -> dict[str, Any]:
+        return self._post("/api/v1/fragilite/predict", features)

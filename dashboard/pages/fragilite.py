@@ -2,10 +2,18 @@
 
 from typing import Any
 
-from dash import Dash, Input, Output, dcc, html
+from dash import Dash, Input, Output, State, dcc, html
 
 from api.cluster_client import ClusterClient
 from components.charts import cluster_effectifs_bars, cluster_profils_parallel, clusters_map
+from components.fragilite import (
+    FIELD_TO_FEATURE,
+    SIMULATOR_FIELDS,
+    prediction_result,
+    simulator_form,
+)
+
+_FIELD_IDS = [field_id for field_id, *_ in SIMULATOR_FIELDS]
 
 
 def layout() -> html.Div:
@@ -23,6 +31,7 @@ def layout() -> html.Div:
                     dcc.Graph(id="clusters-profils"),
                 ],
             ),
+            simulator_form(),
         ],
     )
 
@@ -48,3 +57,19 @@ def register_callbacks(app: Dash, client: ClusterClient) -> None:
             cluster_effectifs_bars(summaries),
             cluster_profils_parallel(profils),
         )
+
+    @app.callback(
+        Output("sim-result", "children"),
+        Input("sim-predict", "n_clicks"),
+        [State("sim-has_gare", "value"), *[State(fid, "value") for fid in _FIELD_IDS]],
+        prevent_initial_call=True,
+    )
+    def _predict(_n_clicks: int, has_gare: str, *values: float | None) -> Any:
+        features: dict[str, Any] = {"has_gare": has_gare == "true"}
+        for field_id, value in zip(_FIELD_IDS, values, strict=True):
+            features[FIELD_TO_FEATURE[field_id]] = value
+        try:
+            prediction = client.predict(features)
+        except Exception:
+            return html.Div("Prédiction indisponible", className="error")
+        return prediction_result(prediction)

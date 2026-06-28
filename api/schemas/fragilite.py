@@ -41,3 +41,30 @@ class ClusterProfil(BaseModel):
     niveau_fragilite: str | None
     effectif: int
     features: list[FeatureProfile]
+
+
+class FragiliteFeatures(BaseModel):
+    """V7.5 — entrées brutes du simulateur (toutes optionnelles : imputées par médiane).
+
+    `has_gare` n'est pas une feature mais la variable de **stratification** du modèle.
+    """
+
+    has_gare: bool
+    population: float | None = None
+    densite_pop_km2: float | None = None
+    part_65plus: float | None = None
+    revenu_median_uc: float | None = None
+    nb_lignes_total: float | None = None
+    nb_trajets_moy_arret: float | None = None
+    amplitude_moy_h: float | None = None
+    taux_sans_voiture: float | None = None
+    distance_dom_trav_med_km: float | None = None
+    dist_gare_min_m: float | None = None
+
+
+class FragilitePrediction(BaseModel):
+    """V7.5 — cluster prédit par le modèle live."""
+
+    cluster: int
+    cluster_nom: str | None
+    niveau_fragilite: str | None

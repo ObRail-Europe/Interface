@@ -1,6 +1,7 @@
 """Tests des composants de l'onglet Fragilité (fonctions pures, sans API)."""
 
 from components.charts import cluster_effectifs_bars, cluster_profils_parallel, clusters_map
+from components.fragilite import FIELD_TO_FEATURE, prediction_result, simulator_form
 
 _POINTS = [
     {
@@ -80,3 +81,25 @@ def test_cluster_profils_parallel_keeps_only_filled_features() -> None:
 
 def test_cluster_profils_parallel_empty_does_not_crash() -> None:
     assert len(cluster_profils_parallel([]).data) == 0
+
+
+def test_field_to_feature_maps_to_api_names() -> None:
+    # Les ids du formulaire retombent sur les noms de features attendus par l'API.
+    assert FIELD_TO_FEATURE["sim-population"] == "population"
+    assert FIELD_TO_FEATURE["sim-dist_gare_min_m"] == "dist_gare_min_m"
+
+
+def test_simulator_form_has_predict_button_and_gare_selector() -> None:
+    text = str(simulator_form())
+    assert "sim-predict" in text
+    assert "sim-has_gare" in text
+
+
+def test_prediction_result_shows_cluster_and_level() -> None:
+    panel = prediction_result(
+        {"cluster": 2, "cluster_nom": "c2 - rural", "niveau_fragilite": "Élevée"}
+    )
+    text = str(panel)
+    assert "Cluster 2" in text
+    assert "c2 - rural" in text
+    assert "Élevée" in text
