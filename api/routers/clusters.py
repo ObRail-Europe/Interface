@@ -1,6 +1,6 @@
 """Endpoints de l'onglet « Fragilité territoriale » (V7)."""
 
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends
 
@@ -12,6 +12,7 @@ from schemas.fragilite import (
     ClusterSummary,
     FragiliteFeatures,
     FragilitePrediction,
+    FragiliteRepartition,
 )
 from services.fragilite_service import FragiliteService
 
@@ -40,6 +41,15 @@ def get_clusters(service: ServiceDep) -> list[ClusterSummary]:
 @router.get("/clusters/profils", response_model=list[ClusterProfil], summary="Profils des clusters")
 def get_clusters_profils(service: ServiceDep) -> list[ClusterProfil]:
     return service.get_profils()
+
+
+@router.get(
+    "/stats/fragilite", response_model=FragiliteRepartition, summary="Répartition par maille"
+)
+def get_fragilite_repartition(
+    service: ServiceDep, by: Literal["code_region", "code_dept"] = "code_region"
+) -> FragiliteRepartition:
+    return service.get_repartition(by)
 
 
 @router.post(

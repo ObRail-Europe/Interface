@@ -4,6 +4,7 @@ from repositories.interfaces import (
     ClusterGeoAggregate,
     ClusterProfilAggregate,
     ClusterSummaryAggregate,
+    FragiliteMailleAggregate,
 )
 from services.fragilite_service import FragiliteService
 
@@ -16,10 +17,12 @@ class FakeClusterRepository:
         carte: list[ClusterGeoAggregate] | None = None,
         summaries: list[ClusterSummaryAggregate] | None = None,
         profils: list[ClusterProfilAggregate] | None = None,
+        mailles: list[FragiliteMailleAggregate] | None = None,
     ) -> None:
         self._carte = carte or []
         self._summaries = summaries or []
         self._profils = profils or []
+        self._mailles = mailles or []
 
     def clusters_carte(
         self, code_dept: str | None, code_region: str | None, has_gare: bool | None
@@ -31,6 +34,9 @@ class FakeClusterRepository:
 
     def cluster_profils(self, features: list[str]) -> list[ClusterProfilAggregate]:
         return self._profils
+
+    def fragilite_par_maille(self, by: str) -> list[FragiliteMailleAggregate]:
+        return self._mailles
 
 
 def test_get_carte_maps_clusters() -> None:
@@ -58,6 +64,17 @@ def test_get_profils_normalizes_per_feature() -> None:
     assert revenu[1].moyenne_normalisee == 0.0  # min -> 0
     assert revenu[2].moyenne_normalisee == 0.5  # milieu
     assert by_cluster[0].effectif == 6
+
+
+def test_get_repartition_orders_levels_by_severity() -> None:
+    repo = FakeClusterRepository(
+        mailles=[FragiliteMailleAggregate("11", {"Élevée": 5, "Faible": 12, "Faible-modérée": 3})]
+    )
+    repartition = FragiliteService(repo).get_repartition("code_region")
+
+    assert repartition.by == "code_region"
+    niveaux = [n.niveau for n in repartition.mailles[0].repartition]
+    assert niveaux == ["Faible", "Faible-modérée", "Élevée"]  # ordonné par gravité croissante
 
 
 def test_get_profils_handles_missing_feature() -> None:

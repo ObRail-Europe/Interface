@@ -265,6 +265,14 @@ class ClusterProfilAggregate:
     feature_means: dict[str, float | None]
 
 
+@dataclass(frozen=True)
+class FragiliteMailleAggregate:
+    """Répartition des niveaux de fragilité dans une maille (V7.3)."""
+
+    cle: str
+    repartition: dict[str, int]  # niveau_fragilite -> nombre de communes
+
+
 class ClusterRepository(Protocol):
     """Accès aux données de l'onglet « Fragilité territoriale ».
 
@@ -279,3 +287,5 @@ class ClusterRepository(Protocol):
     def cluster_summaries(self) -> list[ClusterSummaryAggregate]: ...
 
     def cluster_profils(self, features: list[str]) -> list[ClusterProfilAggregate]: ...
+
+    def fragilite_par_maille(self, by: str) -> list[FragiliteMailleAggregate]: ...

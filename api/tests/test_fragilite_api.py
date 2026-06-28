@@ -36,3 +36,17 @@ def test_clusters_profils_endpoint(client: TestClient) -> None:
     cluster2 = next(p for p in data if p["cluster"] == 2)
     revenu2 = next(f for f in cluster2["features"] if f["nom"] == "revenu_median_uc")
     assert revenu2["moyenne_normalisee"] == 1.0
+
+
+def test_fragilite_repartition_by_region(client: TestClient) -> None:
+    data = client.get("/api/v1/stats/fragilite?by=code_region").json()
+    assert data["by"] == "code_region"
+    by_cle = {m["cle"]: m for m in data["mailles"]}
+    # Région 84 : Lyon (Faible) + Chamonix (Faible-modérée) = 2 communes.
+    assert sum(n["nb"] for n in by_cle["84"]["repartition"]) == 2
+    # Région 11 : Paris en « Élevée ».
+    assert any(n["niveau"] == "Élevée" for n in by_cle["11"]["repartition"])
+
+
+def test_fragilite_repartition_rejects_unknown_maille(client: TestClient) -> None:
+    assert client.get("/api/v1/stats/fragilite?by=code_commune").status_code == 422

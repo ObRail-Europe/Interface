@@ -68,3 +68,24 @@ class FragilitePrediction(BaseModel):
     cluster: int
     cluster_nom: str | None
     niveau_fragilite: str | None
+
+
+class FragiliteNiveau(BaseModel):
+    """Effectif d'un niveau de fragilité dans une maille."""
+
+    niveau: str
+    nb: int
+
+
+class FragiliteMaille(BaseModel):
+    """V7.3 — répartition des niveaux de fragilité dans une maille."""
+
+    cle: str
+    repartition: list[FragiliteNiveau]
+
+
+class FragiliteRepartition(BaseModel):
+    """V7.3 — répartition de la fragilité par maille (barres empilées)."""
+
+    by: str
+    mailles: list[FragiliteMaille]

@@ -1,6 +1,11 @@
 """Tests des composants de l'onglet Fragilité (fonctions pures, sans API)."""
 
-from components.charts import cluster_effectifs_bars, cluster_profils_parallel, clusters_map
+from components.charts import (
+    cluster_effectifs_bars,
+    cluster_profils_parallel,
+    clusters_map,
+    fragilite_stacked_bars,
+)
 from components.fragilite import FIELD_TO_FEATURE, prediction_result, simulator_form
 
 _POINTS = [
@@ -93,6 +98,29 @@ def test_simulator_form_has_predict_button_and_gare_selector() -> None:
     text = str(simulator_form())
     assert "sim-predict" in text
     assert "sim-has_gare" in text
+
+
+_REPARTITION = {
+    "by": "code_region",
+    "mailles": [
+        {
+            "cle": "11",
+            "repartition": [{"niveau": "Faible", "nb": 3}, {"niveau": "Élevée", "nb": 1}],
+        },
+        {"cle": "84", "repartition": [{"niveau": "Faible-modérée", "nb": 2}]},
+    ],
+}
+
+
+def test_fragilite_stacked_bars_one_trace_per_present_level() -> None:
+    fig = fragilite_stacked_bars(_REPARTITION)
+    assert fig.layout.barmode == "stack"
+    names = [t.name for t in fig.data]
+    # Ordre de gravité croissante ; niveaux absents écartés.
+    assert names == ["Faible", "Faible-modérée", "Élevée"]
+    faible = next(t for t in fig.data if t.name == "Faible")
+    assert list(faible.x) == ["11", "84"]
+    assert list(faible.y) == [3, 0]  # région 84 n'a pas de « Faible »
 
 
 def test_prediction_result_shows_cluster_and_level() -> None:

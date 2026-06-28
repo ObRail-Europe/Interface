@@ -4,7 +4,16 @@ from typing import Any
 
 import plotly.graph_objects as go
 
-from theme import COLOR_AVION, COLOR_CLUSTERS, COLOR_JOUR, COLOR_NUIT, COLOR_TRAIN
+from theme import (
+    COLOR_AVION,
+    COLOR_CLUSTERS,
+    COLOR_FRAGILITE,
+    COLOR_JOUR,
+    COLOR_NUIT,
+    COLOR_TRAIN,
+)
+
+_FRAGILITE_ORDER = ("Faible", "Faible-modérée", "Modérée", "Modérée-élevée", "Élevée")
 
 _MARGIN = {"t": 50, "b": 10, "l": 10, "r": 10}
 
@@ -430,6 +439,34 @@ _FEATURE_LABELS = {
     "nb_trajets_total": "Trajets",
     "dist_gare_min_m": "Dist. gare",
 }
+
+
+def fragilite_stacked_bars(repartition: dict[str, Any]) -> go.Figure:
+    """Répartition de la fragilité par maille (V7.3) : barres empilées par niveau."""
+    mailles = repartition["mailles"]
+    cles = [m["cle"] for m in mailles]
+    counts = [{r["niveau"]: r["nb"] for r in m["repartition"]} for m in mailles]
+    present = [n for n in _FRAGILITE_ORDER if any(n in c for c in counts)]
+
+    fig = go.Figure()
+    for niveau in present:
+        fig.add_trace(
+            go.Bar(
+                x=cles,
+                y=[c.get(niveau, 0) for c in counts],
+                name=niveau,
+                marker_color=COLOR_FRAGILITE.get(niveau),
+            )
+        )
+    fig.update_layout(
+        barmode="stack",
+        title=f"Répartition de la fragilité par {repartition['by'].removeprefix('code_')}",
+        xaxis_title=repartition["by"].removeprefix("code_").capitalize(),
+        yaxis_title="Communes",
+        margin=_MARGIN,
+        legend={"orientation": "h"},
+    )
+    return fig
 
 
 def cluster_profils_parallel(profils: list[dict[str, Any]]) -> go.Figure:

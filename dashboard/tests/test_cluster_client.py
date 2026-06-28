@@ -30,7 +30,12 @@ def test_summaries_and_profils_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     client = HttpClusterClient("http://api")
     client.get_summaries()
     client.get_profils()
-    assert captured == ["/api/v1/clusters", "/api/v1/clusters/profils"]
+    client.get_repartition("code_dept")
+    assert captured == [
+        "/api/v1/clusters",
+        "/api/v1/clusters/profils",
+        "/api/v1/stats/fragilite?by=code_dept",
+    ]
 
 
 def test_predict_posts_features(monkeypatch: pytest.MonkeyPatch) -> None:

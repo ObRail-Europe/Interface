@@ -21,6 +21,8 @@ class ClusterClient(Protocol):
 
     def get_profils(self) -> list[dict[str, Any]]: ...
 
+    def get_repartition(self, by: str) -> dict[str, Any]: ...
+
     def predict(self, features: dict[str, Any]) -> dict[str, Any]: ...
 
 
@@ -39,6 +41,9 @@ class HttpClusterClient(BaseHttpClient):
 
     def get_profils(self) -> list[dict[str, Any]]:
         return self._get("/api/v1/clusters/profils")
+
+    def get_repartition(self, by: str = "code_region") -> dict[str, Any]:
+        return self._get(f"/api/v1/stats/fragilite?{urlencode({'by': by})}")
 
     def predict(self, features: dict[str, Any]) -> dict[str, Any]:
         return self._post("/api/v1/fragilite/predict", features)

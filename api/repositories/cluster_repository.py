@@ -12,7 +12,11 @@ from repositories.interfaces import (
     ClusterGeoAggregate,
     ClusterProfilAggregate,
     ClusterSummaryAggregate,
+    FragiliteMailleAggregate,
 )
+
+# liste blanche
+_MAILLE_COLUMNS = {"code_dept": Ville.code_dept, "code_region": Ville.code_region}
 
 # Liste blanche.
 _PROFILE_COLUMNS = {
@@ -118,4 +122,20 @@ class SqlAlchemyClusterRepository:
                 feature_means={name: _as_float(getattr(row, name)) for name in features},
             )
             for row in self._session.execute(stmt).all()
+        ]
+
+    def fragilite_par_maille(self, by: str) -> list[FragiliteMailleAggregate]:
+        maille = _MAILLE_COLUMNS[by]
+        stmt = (
+            select(maille.label("cle"), Cluster.niveau_fragilite, func.count().label("nb"))
+            .join(Ville, Ville.citycode == Cluster.citycode)
+            .where(maille.isnot(None), Cluster.niveau_fragilite.isnot(None))
+            .group_by(maille, Cluster.niveau_fragilite)
+        )
+        repartitions: dict[str, dict[str, int]] = {}
+        for row in self._session.execute(stmt).all():
+            repartitions.setdefault(row.cle, {})[row.niveau_fragilite] = row.nb
+        return [
+            FragiliteMailleAggregate(cle=cle, repartition=rep)
+            for cle, rep in sorted(repartitions.items())
         ]

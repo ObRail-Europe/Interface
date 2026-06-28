@@ -18,3 +18,12 @@ COLOR_CLUSTERS = (
     "#f0e442",
     "#999999",
 )
+
+# Échelle séquentielle de la fragilité (clair/vert → foncé/rouge).
+COLOR_FRAGILITE = {
+    "Faible": "#2e8b57",
+    "Faible-modérée": "#9acd32",
+    "Modérée": "#e8a33d",
+    "Modérée-élevée": "#e67e22",
+    "Élevée": "#c0392b",
+}

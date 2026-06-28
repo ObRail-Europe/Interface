@@ -1,7 +1,15 @@
 """Cas d'usage de l'onglet « Fragilité territoriale »."""
 
 from repositories.interfaces import ClusterRepository
-from schemas.fragilite import ClusterGeoPoint, ClusterProfil, ClusterSummary, FeatureProfile
+from schemas.fragilite import (
+    ClusterGeoPoint,
+    ClusterProfil,
+    ClusterSummary,
+    FeatureProfile,
+    FragiliteMaille,
+    FragiliteNiveau,
+    FragiliteRepartition,
+)
 from schemas.liaison import GeoPoint
 
 # Features profilées en coordonnées parallèles (V7.2), dans l'ordre d'affichage.
@@ -13,6 +21,13 @@ _PROFILE_FEATURES = (
     "nb_trajets_total",
     "dist_gare_min_m",
 )
+
+# Ordre croissant (inconnus rejetés en fin).
+_NIVEAU_ORDER = ("Faible", "Faible-modérée", "Modérée", "Modérée-élevée", "Élevée")
+
+
+def _niveau_rank(niveau: str) -> int:
+    return _NIVEAU_ORDER.index(niveau) if niveau in _NIVEAU_ORDER else len(_NIVEAU_ORDER)
 
 
 def _normalize(value: float | None, bounds: tuple[float, float] | None) -> float | None:
@@ -86,3 +101,16 @@ class FragiliteService:
             )
             for p in profils
         ]
+
+    def get_repartition(self, by: str) -> FragiliteRepartition:
+        """V7.3 — répartition des niveaux de fragilité par maille (ordonnée par gravité)."""
+        mailles = []
+        for m in self._repository.fragilite_par_maille(by):
+            niveaux = sorted(m.repartition.items(), key=lambda kv: (_niveau_rank(kv[0]), kv[0]))
+            mailles.append(
+                FragiliteMaille(
+                    cle=m.cle,
+                    repartition=[FragiliteNiveau(niveau=n, nb=nb) for n, nb in niveaux],
+                )
+            )
+        return FragiliteRepartition(by=by, mailles=mailles)
