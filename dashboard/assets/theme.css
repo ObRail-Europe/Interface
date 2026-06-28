@@ -138,3 +138,52 @@
   padding: 0.5rem 1rem;
   cursor: pointer;
 }
+
+.health-band {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 0.5rem 0 1rem;
+}
+
+.health-card {
+  background: var(--c-surface);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.health-name {
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.health-badge {
+  font-weight: 700;
+  font-size: 0.8rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  color: #fff;
+}
+
+.health-badge.up {
+  background: #2e8b57;
+}
+
+.health-badge.down {
+  background: #c0392b;
+}
+
+.health-latence {
+  color: var(--c-muted);
+  font-size: 0.85rem;
+}
+
+.grafana-embed {
+  width: 100%;
+  height: 720px;
+  border: 1px solid #d7dbe6;
+  border-radius: 10px;
+}

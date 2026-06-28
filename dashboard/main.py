@@ -11,14 +11,17 @@ from api.cluster_client import HttpClusterClient
 from api.explorer_client import HttpExplorerClient
 from api.overview_client import HttpOverviewClient
 from api.qualite_client import HttpQualiteClient
+from api.supervision_client import HttpSupervisionClient
 from api.territoire_client import HttpTerritoireClient
 from config import settings
-from pages import carbon, explorer, fragilite, overview, qualite, territoires
+from logging_config import configure_logging
+from pages import carbon, explorer, fragilite, overview, qualite, supervision, territoires
 
 
 def create_app() -> Dash:
     # suppress_callback_exceptions : les composants d'un onglet ne sont dans le DOM
     # que lorsqu'il est ouvert (callbacks par onglet déclenchés à l'ouverture).
+    configure_logging(settings.log_level)
     app = Dash(__name__, title="ObRail — Dashboard", suppress_callback_exceptions=True)
 
     overview_client = HttpOverviewClient(settings.api_url)
@@ -27,6 +30,7 @@ def create_app() -> Dash:
     territoire_client = HttpTerritoireClient(settings.api_url)
     cluster_client = HttpClusterClient(settings.api_url)
     qualite_client = HttpQualiteClient(settings.api_url)
+    supervision_client = HttpSupervisionClient(settings.api_url)
 
     app.layout = html.Div(
         className="app",
@@ -62,6 +66,11 @@ def create_app() -> Dash:
                         value="qualite",
                         children=qualite.layout(),
                     ),
+                    dcc.Tab(
+                        label="Supervision",
+                        value="supervision",
+                        children=supervision.layout(),
+                    ),
                 ],
             ),
         ],
@@ -72,6 +81,7 @@ def create_app() -> Dash:
     territoires.register_callbacks(app, territoire_client)
     fragilite.register_callbacks(app, cluster_client)
     qualite.register_callbacks(app, qualite_client)
+    supervision.register_callbacks(app, supervision_client)
     return app
 
 

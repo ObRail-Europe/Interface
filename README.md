@@ -17,22 +17,27 @@ fragilité**, via une API REST et un dashboard. Ce dépôt correspond à la phas
 └────────────┘                 └──────────┘                └────────────┘
 ```
 
-| Service     | Stack                       | Port  | Rôle                                            |
-| ----------- | --------------------------- | ----- | ----------------------------------------------- |
-| `db`        | PostgreSQL 16               | 5432  | Persistance des données (volume `pgdata`)       |
-| `api`       | FastAPI + SQLAlchemy (uv)   | 8000  | API REST, doc OpenAPI/Swagger sur `/docs`       |
-| `dashboard` | Dash / Plotly (uv)          | 8050  | Interface de consultation et de visualisation   |
+| Service      | Stack                       | Port  | Rôle                                            |
+| ------------ | --------------------------- | ----- | ----------------------------------------------- |
+| `db`         | PostgreSQL 16               | 5432  | Persistance des données (volume `pgdata`)       |
+| `api`        | FastAPI + SQLAlchemy (uv)   | 8000  | API REST, doc OpenAPI/Swagger sur `/docs`       |
+| `dashboard`  | Dash / Plotly (uv)          | 8050  | Interface de consultation et de visualisation   |
+| `prometheus` | Prometheus                  | 9090  | Collecte des métriques de l'API (`/metrics`)    |
+| `loki`       | Grafana Loki                | 3100  | Agrégation des logs applicatifs                 |
+| `promtail`   | Grafana Promtail            | —     | Expédition des logs des conteneurs vers Loki    |
+| `grafana`    | Grafana                     | 3000  | Tableaux de bord de supervision (métriques+logs)|
 
 ## Démarrage rapide (une seule commande)
 
 ```bash
 cp .env.example .env
-docker compose up --build                    # db + migrations + api + dashboard
+docker compose up --build                    # db + migrations + api + dashboard + monitoring
 docker compose --profile load run --rm load  # (optionnel) ingère les CSV de data/
 ```
 
 - API : http://localhost:8000/health · Swagger : http://localhost:8000/docs
 - Dashboard : http://localhost:8050
+- Supervision : http://localhost:3000 (Grafana, accès anonyme) · Prometheus : http://localhost:9090
 
 > Le **schéma est créé automatiquement** au démarrage (service `migrate` → `alembic upgrade head`).
 > Le chargement des données reste explicite (service `load`).
@@ -244,6 +249,35 @@ lignes). Trois vues (`mv_qualite_completude`, `mv_qualite_anomalies`, `mv_qualit
 unique pour le refresh concurrent. La vue de complétude est **générée depuis les modèles ORM** (un seul scan par table
 via dé-pivot `VALUES`).
 
+## Onglet « Supervision » & observabilité (V9)
+
+Question centrale : **le service est-il sain ?**
+
+| Viz | Source | Visualisation |
+| --- | --- | --- |
+| V9.1 État de santé | `GET /health`, `GET /api/v1/health/details` | badges UP/DOWN (API, base) + latence, rafraîchis toutes les 10 s |
+| V9.2 Métriques | `GET /metrics` (Prometheus) → Grafana | disponibilité, req/s, latence p50/p95, taux d'erreurs |
+| V9.3 Journal applicatif | logs → Promtail → Loki → Grafana | flux des logs applicatifs en temps réel |
+
+**Stack monitoring** (lancée par `docker compose up`) : l'API est instrumentée
+(`prometheus-fastapi-instrumentator`) et expose `/metrics` ; **Prometheus** la scrape, **Promtail** ramasse les logs
+des conteneurs vers **Loki**, et **Grafana** (provisionné : datasources + dashboard *ObRail — Supervision*) restitue
+métriques et logs. L'onglet front embarque ce dashboard Grafana (mode kiosk) sous les badges de santé.
+
+| Service | Port | Rôle |
+| --- | --- | --- |
+| `prometheus` | 9090 | collecte des métriques de l'API |
+| `loki` | 3100 | agrégation des logs |
+| `promtail` | — | expédition des logs des conteneurs vers Loki |
+| `grafana` | 3000 | tableaux de bord (métriques + logs), accès anonyme + embedding |
+
+**Politique de logs** : journalisation **structurée JSON** sur stdout (API + dashboard), niveau configurable
+(`LOG_LEVEL`), middleware FastAPI journalisant chaque requête (latence, statut) et **gestion d'erreurs normalisée**
+(`ApiError { detail, code }` + exceptions métier). Aucune écriture de fichier — les logs sont collectés depuis stdout.
+
+**Vues & index** : aucune n'est nécessaire — la supervision repose sur des **sondes live** (`SELECT 1`),
+l'**instrumentation** Prometheus et l'**agrégation de logs**, pas sur des agrégations de données métier.
+
 ## Qualité & workflow
 
 - **CI** : GitHub Actions (`.github/workflows/ci.yml`) - lint, tests, build des images Docker.
@@ -260,9 +294,12 @@ trajets** (liaisons, table, histogramme, détail), **onglet Empreinte carbone**
 (CO₂ évité vs avion, densité distance × intensité, distribution par mode),
 **onglet Territoires & couverture** (carte des communes, couverture par maille, amplitude de service),
 **onglet Fragilité territoriale** (carte des clusters, effectifs, profils, répartition par maille,
-simulateur live) et **onglet Qualité des données** (complétude, anomalies, volumétrie).
+simulateur live), **onglet Qualité des données** (complétude, anomalies, volumétrie) et
+**onglet Supervision** (santé, métriques & journal via Prometheus / Loki / Grafana).
+
+**Monitoring** : Prometheus + Loki + Promtail + Grafana, lancés avec la stack ; logs structurés JSON.
 
 **À venir** :
 
-- **Onglets** : Jour/Nuit (détaillé), Opérateurs, Supervision.
-- **Monitoring** : Prometheus + Grafana. **Tests E2E** : Playwright.
+- **Onglets** : Jour/Nuit (détaillé), Opérateurs.
+- **Tests E2E** : Playwright.

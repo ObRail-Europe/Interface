@@ -1,0 +1,12 @@
+# Provisionne les dashboards depuis le dossier monté.
+apiVersion: 1
+
+providers:
+  - name: ObRail
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: false
