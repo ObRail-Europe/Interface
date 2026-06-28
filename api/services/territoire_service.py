@@ -24,7 +24,7 @@ class TerritoireService:
         code_region: str | None = None,
         has_gare: bool | None = None,
     ) -> list[VilleGeoPoint]:
-        """V6.1 — communes géolocalisées et la valeur de la dimension cartographiée."""
+        """V6.1 - communes géolocalisées et la valeur de la dimension cartographiée."""
         return [
             VilleGeoPoint(
                 citycode=v.citycode,
@@ -38,7 +38,7 @@ class TerritoireService:
         ]
 
     def get_couverture(self, by: str) -> Couverture:
-        """V6.2 — couverture ferroviaire agrégée par maille (département ou région)."""
+        """V6.2 - couverture ferroviaire agrégée par maille (département ou région)."""
         return Couverture(
             by=by,
             mailles=[
@@ -54,7 +54,7 @@ class TerritoireService:
         )
 
     def get_amplitude(self, bin_h: float = 1.0) -> AmplitudeDistribution:
-        """V6.4 — distribution de l'amplitude de service + part desservie après minuit."""
+        """V6.4 - distribution de l'amplitude de service + part desservie après minuit."""
         agg = self._repository.amplitude(bin_h)
         return AmplitudeDistribution(
             bin_h=bin_h,

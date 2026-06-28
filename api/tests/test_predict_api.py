@@ -1,4 +1,4 @@
-"""Test d'intégration du simulateur (POST /fragilite/predict) — modèle live réel.
+"""Test d'intégration du simulateur (POST /fragilite/predict) - modèle live réel.
 
 Ignoré si les artefacts .joblib sont absents (ex. CI sans data/).
 """

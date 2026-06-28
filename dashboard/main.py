@@ -22,7 +22,7 @@ def create_app() -> Dash:
     # suppress_callback_exceptions : les composants d'un onglet ne sont dans le DOM
     # que lorsqu'il est ouvert (callbacks par onglet déclenchés à l'ouverture).
     configure_logging(settings.log_level)
-    app = Dash(__name__, title="ObRail — Dashboard", suppress_callback_exceptions=True)
+    app = Dash(__name__, title="ObRail - Dashboard", suppress_callback_exceptions=True)
 
     overview_client = HttpOverviewClient(settings.api_url)
     explorer_client = HttpExplorerClient(settings.api_url)
@@ -35,7 +35,7 @@ def create_app() -> Dash:
     app.layout = html.Div(
         className="app",
         children=[
-            html.H1("ObRail — Observatoire ferroviaire"),
+            html.H1("ObRail - Observatoire ferroviaire"),
             dcc.Tabs(
                 id="tabs",
                 value="overview",

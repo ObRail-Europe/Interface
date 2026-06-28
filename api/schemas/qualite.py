@@ -12,7 +12,7 @@ class ColonneCompletude(BaseModel):
 
 
 class Completude(BaseModel):
-    """V8.1 — complétude par colonne pour une table."""
+    """V8.1 - complétude par colonne pour une table."""
 
     table: str
     nb_lignes: int
@@ -20,7 +20,7 @@ class Completude(BaseModel):
 
 
 class Anomalie(BaseModel):
-    """V8.2 — un type d'anomalie et son effectif."""
+    """V8.2 - un type d'anomalie et son effectif."""
 
     type: str
     libelle: str
@@ -29,19 +29,19 @@ class Anomalie(BaseModel):
 
 
 class Anomalies(BaseModel):
-    """V8.2 — anomalies & doublons."""
+    """V8.2 - anomalies & doublons."""
 
     anomalies: list[Anomalie]
 
 
 class SourceVolume(BaseModel):
-    """V8.4 — volume de trajets d'une source."""
+    """V8.4 - volume de trajets d'une source."""
 
     cle: str
     nb: int
 
 
 class Volumetrie(BaseModel):
-    """V8.4 — volumétrie par source."""
+    """V8.4 - volumétrie par source."""
 
     sources: list[SourceVolume]

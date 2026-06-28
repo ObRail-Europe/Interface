@@ -22,7 +22,7 @@ class QualiteService:
         self._repository = repository
 
     def get_completude(self, table: str) -> Completude:
-        """V8.1 — complétude par colonne (taux dérivé des NULLs précalculés)."""
+        """V8.1 - complétude par colonne (taux dérivé des NULLs précalculés)."""
         rows = self._repository.completude(table)
         nb_lignes = rows[0].nb_lignes if rows else 0
         return Completude(
@@ -39,7 +39,7 @@ class QualiteService:
         )
 
     def get_anomalies(self) -> Anomalies:
-        """V8.2 — anomalies & doublons."""
+        """V8.2 - anomalies & doublons."""
         return Anomalies(
             anomalies=[
                 Anomalie(type=a.type, libelle=a.libelle, nb=a.nb, severite=a.severite)
@@ -48,7 +48,7 @@ class QualiteService:
         )
 
     def get_volumetrie(self) -> Volumetrie:
-        """V8.4 — volumétrie par source."""
+        """V8.4 - volumétrie par source."""
         return Volumetrie(
             sources=[SourceVolume(cle=s.cle, nb=s.nb) for s in self._repository.volumetrie()]
         )

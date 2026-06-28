@@ -50,7 +50,7 @@ class FragiliteService:
         code_region: str | None = None,
         has_gare: bool | None = None,
     ) -> list[ClusterGeoPoint]:
-        """V7.1 — communes géolocalisées colorées par cluster de fragilité."""
+        """V7.1 - communes géolocalisées colorées par cluster de fragilité."""
         return [
             ClusterGeoPoint(
                 citycode=c.citycode,
@@ -64,7 +64,7 @@ class FragiliteService:
         ]
 
     def get_summaries(self) -> list[ClusterSummary]:
-        """V7.4 — effectifs des clusters."""
+        """V7.4 - effectifs des clusters."""
         return [
             ClusterSummary(
                 cluster=s.cluster,
@@ -76,7 +76,7 @@ class FragiliteService:
         ]
 
     def get_profils(self) -> list[ClusterProfil]:
-        """V7.2 — profils des clusters (moyennes brutes + normalisées inter-clusters)."""
+        """V7.2 - profils des clusters (moyennes brutes + normalisées inter-clusters)."""
         profils = self._repository.cluster_profils(list(_PROFILE_FEATURES))
         bounds: dict[str, tuple[float, float] | None] = {}
         for name in _PROFILE_FEATURES:
@@ -103,7 +103,7 @@ class FragiliteService:
         ]
 
     def get_repartition(self, by: str) -> FragiliteRepartition:
-        """V7.3 — répartition des niveaux de fragilité par maille (ordonnée par gravité)."""
+        """V7.3 - répartition des niveaux de fragilité par maille (ordonnée par gravité)."""
         mailles = []
         for m in self._repository.fragilite_par_maille(by):
             niveaux = sorted(m.repartition.items(), key=lambda kv: (_niveau_rank(kv[0]), kv[0]))

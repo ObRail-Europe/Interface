@@ -1,7 +1,7 @@
 """Politique de logs du module base de données : journalisation structurée (JSON) sur stdout.
 
 Format JSON aligné sur celui de l'API, directement exploitable par Loki/Grafana. La sortie
-stdout est collectée depuis les logs du conteneur — aucune écriture de fichier.
+stdout est collectée depuis les logs du conteneur - aucune écriture de fichier.
 """
 
 import json

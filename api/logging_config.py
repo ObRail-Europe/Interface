@@ -2,7 +2,7 @@
 
 Le format JSON est directement exploitable par Loki/Grafana (parsing des champs
 `level`, `logger`, `method`, `path`, `status`, `duration_ms`…). La sortie stdout est
-collectée par Promtail depuis les logs du conteneur — aucune écriture de fichier.
+collectée par Promtail depuis les logs du conteneur - aucune écriture de fichier.
 """
 
 import json

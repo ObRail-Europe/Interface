@@ -18,7 +18,7 @@ def layout() -> html.Div:
     return html.Div(
         className="page",
         children=[
-            html.H2("Empreinte carbone — train vs avion"),
+            html.H2("Empreinte carbone - train vs avion"),
             dcc.Interval(id="carbon-trigger", interval=200, max_intervals=1),
             dcc.Loading(html.Div(id="co2-counter")),
             dcc.Loading(dcc.Graph(id="co2-comparaison")),

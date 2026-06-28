@@ -1,4 +1,4 @@
-# Loki : agrégation des logs applicatifs (mono-binaire, stockage filesystem) — V9.3.
+# Loki : agrégation des logs applicatifs (mono-binaire, stockage filesystem) - V9.3.
 auth_enabled: false
 
 server:

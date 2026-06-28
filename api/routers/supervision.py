@@ -1,4 +1,4 @@
-"""Endpoints de l'onglet « Supervision » (V9.1 — santé détaillée)."""
+"""Endpoints de l'onglet « Supervision » (V9.1 - santé détaillée)."""
 
 import logging
 import time
@@ -18,7 +18,7 @@ logger = logging.getLogger("obrail.supervision")
 
 @router.get("/details", response_model=HealthDetails, summary="État de santé détaillé")
 def health_details(db: Annotated[Session, Depends(get_db)]) -> HealthDetails:
-    """État des services (API + base) avec latence — alimente les badges UP/DOWN."""
+    """État des services (API + base) avec latence - alimente les badges UP/DOWN."""
     services = [ServiceHealth(nom="api", statut="up", latence_ms=0.0)]
 
     start = time.perf_counter()

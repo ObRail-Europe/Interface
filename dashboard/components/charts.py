@@ -71,7 +71,7 @@ def departs_map(points: list[dict[str, Any]]) -> go.Figure:
         go.Scattergeo(
             lat=[point["lat"] for point in points],
             lon=[point["lon"] for point in points],
-            text=[f"{point['city_name']} — {point['nb_trajets']} départs" for point in points],
+            text=[f"{point['city_name']} - {point['nb_trajets']} départs" for point in points],
             hoverinfo="text",
             marker={
                 "color": counts,
@@ -207,7 +207,7 @@ def carbon_density_scatter(density: dict[str, Any]) -> go.Figure:
     fig = go.Figure()
     for mode, color, label in (("train", COLOR_TRAIN, "Train"), ("flight", COLOR_AVION, "Avion")):
         cells = [b for b in bins if b["mode"] == mode]
-        hover = f"{label} — %{{x}} km · %{{y}} g/pkm : %{{customdata}} trajets<extra></extra>"
+        hover = f"{label} - %{{x}} km · %{{y}} g/pkm : %{{customdata}} trajets<extra></extra>"
         fig.add_trace(
             go.Scatter(
                 x=[c["x_km"] for c in cells],
@@ -299,7 +299,7 @@ def couverture_map(points: list[dict[str, Any]], dimension_label: str) -> go.Fig
             lat=[point["geo"]["lat"] for point in points],
             lon=[point["geo"]["lon"] for point in points],
             text=[
-                f"{point['city_name']} — {dimension_label} : {valeur:.2f}"
+                f"{point['city_name']} - {dimension_label} : {valeur:.2f}"
                 for point, valeur in zip(points, valeurs, strict=True)
             ],
             hoverinfo="text",
@@ -342,7 +342,7 @@ def couverture_bars(couverture: dict[str, Any], limit: int = 20) -> go.Figure:
             },
             customdata=[[m["nb_communes"], m["taux_avec_gare"]] for m in rows],
             hovertemplate=(
-                "%{y} — %{x} trajets · %{customdata[0]} communes · "
+                "%{y} - %{x} trajets · %{customdata[0]} communes · "
                 "gare %{customdata[1]:.0%}<extra></extra>"
             ),
         )
@@ -396,7 +396,7 @@ def clusters_map(points: list[dict[str, Any]]) -> go.Figure:
             go.Scattergeo(
                 lat=[p["geo"]["lat"] for p in pts],
                 lon=[p["geo"]["lon"] for p in pts],
-                text=[f"{p['city_name']} — {nom} ({p['niveau_fragilite']})" for p in pts],
+                text=[f"{p['city_name']} - {nom} ({p['niveau_fragilite']})" for p in pts],
                 hoverinfo="text",
                 mode="markers",
                 name=nom,
@@ -422,7 +422,7 @@ def cluster_effectifs_bars(summaries: list[dict[str, Any]]) -> go.Figure:
             orientation="h",
             marker_color=[_cluster_color(s["cluster"]) for s in rows],
             customdata=[s["niveau_fragilite"] for s in rows],
-            hovertemplate="%{y} — %{x} communes · fragilité %{customdata}<extra></extra>",
+            hovertemplate="%{y} - %{x} communes · fragilité %{customdata}<extra></extra>",
         )
     )
     fig.update_layout(
@@ -522,11 +522,11 @@ def completude_bars(completude: dict[str, Any]) -> go.Figure:
             orientation="h",
             marker={"color": taux, "colorscale": "RdYlGn", "cmin": 0, "cmax": 1},
             customdata=[c["nb_nuls"] for c in colonnes],
-            hovertemplate="%{y} — %{x:.1f} % complet · %{customdata} NULLs<extra></extra>",
+            hovertemplate="%{y} - %{x:.1f} % complet · %{customdata} NULLs<extra></extra>",
         )
     )
     fig.update_layout(
-        title=f"Complétude — {completude['table']} ({completude['nb_lignes']} lignes)",
+        title=f"Complétude - {completude['table']} ({completude['nb_lignes']} lignes)",
         xaxis_title="Complétude (%)",
         xaxis={"range": [0, 100]},
         margin={"t": 50, "b": 30, "l": 10, "r": 10},
@@ -545,7 +545,7 @@ def anomalies_bars(anomalies: dict[str, Any]) -> go.Figure:
             orientation="h",
             marker_color=[_SEVERITE_COLORS.get(a["severite"], "#999") for a in rows],
             customdata=[a["severite"] for a in rows],
-            hovertemplate="%{y} — %{x} (%{customdata})<extra></extra>",
+            hovertemplate="%{y} - %{x} (%{customdata})<extra></extra>",
         )
     )
     fig.update_layout(

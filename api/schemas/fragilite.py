@@ -6,7 +6,7 @@ from schemas.liaison import GeoPoint
 
 
 class ClusterGeoPoint(BaseModel):
-    """V7.1 — commune géolocalisée et son cluster de fragilité."""
+    """V7.1 - commune géolocalisée et son cluster de fragilité."""
 
     citycode: str | None
     city_name: str
@@ -17,7 +17,7 @@ class ClusterGeoPoint(BaseModel):
 
 
 class ClusterSummary(BaseModel):
-    """V7.4 — effectif d'un cluster (point d'entrée vers les profils)."""
+    """V7.4 - effectif d'un cluster (point d'entrée vers les profils)."""
 
     cluster: int
     cluster_nom: str | None
@@ -34,7 +34,7 @@ class FeatureProfile(BaseModel):
 
 
 class ClusterProfil(BaseModel):
-    """V7.2 — profil multivarié d'un cluster (coordonnées parallèles)."""
+    """V7.2 - profil multivarié d'un cluster (coordonnées parallèles)."""
 
     cluster: int
     cluster_nom: str | None
@@ -44,7 +44,7 @@ class ClusterProfil(BaseModel):
 
 
 class FragiliteFeatures(BaseModel):
-    """V7.5 — entrées brutes du simulateur (toutes optionnelles : imputées par médiane).
+    """V7.5 - entrées brutes du simulateur (toutes optionnelles : imputées par médiane).
 
     `has_gare` n'est pas une feature mais la variable de **stratification** du modèle.
     """
@@ -63,7 +63,7 @@ class FragiliteFeatures(BaseModel):
 
 
 class FragilitePrediction(BaseModel):
-    """V7.5 — cluster prédit par le modèle live."""
+    """V7.5 - cluster prédit par le modèle live."""
 
     cluster: int
     cluster_nom: str | None
@@ -78,14 +78,14 @@ class FragiliteNiveau(BaseModel):
 
 
 class FragiliteMaille(BaseModel):
-    """V7.3 — répartition des niveaux de fragilité dans une maille."""
+    """V7.3 - répartition des niveaux de fragilité dans une maille."""
 
     cle: str
     repartition: list[FragiliteNiveau]
 
 
 class FragiliteRepartition(BaseModel):
-    """V7.3 — répartition de la fragilité par maille (barres empilées)."""
+    """V7.3 - répartition de la fragilité par maille (barres empilées)."""
 
     by: str
     mailles: list[FragiliteMaille]

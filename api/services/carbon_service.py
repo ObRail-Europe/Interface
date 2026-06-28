@@ -55,7 +55,7 @@ class CarbonService:
         )
 
     def get_density(self) -> ScatterDensity:
-        """V5.2 — densité distance × intensité carbone, précalculée et colorée par mode."""
+        """V5.2 - densité distance × intensité carbone, précalculée et colorée par mode."""
         return ScatterDensity(
             bins=[
                 ScatterBin(
@@ -69,7 +69,7 @@ class CarbonService:
         )
 
     def get_distribution(self) -> Co2ParMode:
-        """V5.3 — distribution du CO₂/pkm par mode (quartiles + extrêmes, box plot)."""
+        """V5.3 - distribution du CO₂/pkm par mode (quartiles + extrêmes, box plot)."""
         return Co2ParMode(
             modes=[
                 ModeDistribution(

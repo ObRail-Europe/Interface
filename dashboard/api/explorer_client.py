@@ -1,4 +1,4 @@
-"""Client de l'API ObRail — onglet « Explorateur de trajets »."""
+"""Client de l'API ObRail - onglet « Explorateur de trajets »."""
 
 from typing import Any, Protocol
 from urllib.parse import urlencode

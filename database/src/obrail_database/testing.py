@@ -76,7 +76,7 @@ def engine() -> Engine:
         with eng.connect():
             pass
     except OperationalError:
-        pytest.skip("PostgreSQL indisponible — test d'intégration ignoré")
+        pytest.skip("PostgreSQL indisponible - test d'intégration ignoré")
     Base.metadata.create_all(eng)  # idempotent : crée les tables manquantes
     with eng.begin() as connection:  # vues matérialisées (recréées : reflètent la définition)
         drop_views(connection, ALL_VIEWS)

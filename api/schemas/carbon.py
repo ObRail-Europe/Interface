@@ -13,7 +13,7 @@ class Co2Tranche(BaseModel):
 
 
 class ComparaisonAvion(BaseModel):
-    """V5.1 — CO₂ évité en prenant le train plutôt que l'avion.
+    """V5.1 - CO₂ évité en prenant le train plutôt que l'avion.
 
     Le facteur avion (gCO2e / voyageur-km) est un paramètre **exogène, documenté et
     affiché** : l'estimation avion applique ce facteur aux voyageur-km parcourus en
@@ -37,7 +37,7 @@ class ScatterBin(BaseModel):
 
 
 class ScatterDensity(BaseModel):
-    """V5.2 — densité distance × intensité carbone (agrégée, colorée par mode)."""
+    """V5.2 - densité distance × intensité carbone (agrégée, colorée par mode)."""
 
     bins: list[ScatterBin]
 
@@ -56,6 +56,6 @@ class ModeDistribution(BaseModel):
 
 
 class Co2ParMode(BaseModel):
-    """V5.3 — distribution du CO₂/pkm par mode (train vs avion)."""
+    """V5.3 - distribution du CO₂/pkm par mode (train vs avion)."""
 
     modes: list[ModeDistribution]

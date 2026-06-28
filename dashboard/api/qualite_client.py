@@ -1,4 +1,4 @@
-"""Client de l'API ObRail — onglet « Qualité des données ».
+"""Client de l'API ObRail - onglet « Qualité des données ».
 
 `QualiteClient` est l'abstraction dont dépend la page ; `HttpQualiteClient`
 en est l'implémentation HTTP. Les tests injectent une doublure.

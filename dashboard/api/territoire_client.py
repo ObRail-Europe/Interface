@@ -1,4 +1,4 @@
-"""Client de l'API ObRail — onglet « Territoires & couverture ferroviaire ».
+"""Client de l'API ObRail - onglet « Territoires & couverture ferroviaire ».
 
 `TerritoireClient` est l'abstraction dont dépend la page ; `HttpTerritoireClient`
 en est l'implémentation HTTP. Les tests injectent une doublure.
