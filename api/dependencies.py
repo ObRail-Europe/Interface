@@ -7,11 +7,12 @@ en test via `app.dependency_overrides`.
 from functools import lru_cache
 from typing import Annotated
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from config import settings
 from database import get_db
+from exceptions import ModelUnavailableError
 from ml.fragilite_model import FragiliteModel, load_fragilite_model
 from repositories.carbon_repository import SqlAlchemyCarbonRepository
 from repositories.cluster_repository import SqlAlchemyClusterRepository
@@ -108,4 +109,4 @@ def get_fragilite_model() -> FragiliteModel:
     try:
         return _load_model()
     except (FileNotFoundError, OSError) as exc:
-        raise HTTPException(status_code=503, detail="Modèle de fragilité indisponible") from exc
+        raise ModelUnavailableError("Modèle de fragilité indisponible") from exc

@@ -13,12 +13,14 @@ from api.overview_client import HttpOverviewClient
 from api.qualite_client import HttpQualiteClient
 from api.territoire_client import HttpTerritoireClient
 from config import settings
+from logging_config import configure_logging
 from pages import carbon, explorer, fragilite, overview, qualite, territoires
 
 
 def create_app() -> Dash:
     # suppress_callback_exceptions : les composants d'un onglet ne sont dans le DOM
     # que lorsqu'il est ouvert (callbacks par onglet déclenchés à l'ouverture).
+    configure_logging(settings.log_level)
     app = Dash(__name__, title="ObRail — Dashboard", suppress_callback_exceptions=True)
 
     overview_client = HttpOverviewClient(settings.api_url)

@@ -7,22 +7,28 @@ Exemples :
 """
 
 import argparse
+import logging
 from pathlib import Path
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from config import settings
 from database import engine
 from etl.loaders import load_clusters, load_trajets, load_villes, truncate_all
 from etl.resolve import resolution_stats, resolve_clusters, resolve_trajets
 from etl.views import refresh_views
+from logging_config import configure_logging
 from models import Trajet
+
+logger = logging.getLogger("obrail.etl")
 
 # data/ à la racine du dépôt (ou /data dans le conteneur).
 DEFAULT_DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 
 
 def main() -> None:
+    configure_logging(settings.log_level)
     parser = argparse.ArgumentParser(description="Ingestion ETL ObRail")
     parser.add_argument("--data-dir", type=Path, default=DEFAULT_DATA_DIR)
     parser.add_argument("--trajets-limit", type=int, default=None, help="nb max de trajets")
@@ -31,24 +37,25 @@ def main() -> None:
     parser.add_argument("--no-truncate", action="store_true")
     args = parser.parse_args()
 
+    logger.info("ETL start (data_dir=%s)", args.data_dir)
     with Session(engine) as session:
         if not args.no_truncate:
             truncate_all(session)
             session.commit()
         n_villes = load_villes(session, args.data_dir / "villes_enriched.csv")
         session.commit()
-        print(f"villes   : {n_villes} lignes")
+        logger.info("villes loaded: %d rows", n_villes)
         n_clusters = load_clusters(session, args.data_dir / "clusters_final.csv")
         session.commit()
-        print(f"clusters : {n_clusters} lignes")
+        logger.info("clusters loaded: %d rows", n_clusters)
 
     if args.skip_trajets:
-        print("trajets  : ignoré (--skip-trajets)")
+        logger.info("trajets skipped (--skip-trajets)")
     else:
         load_trajets(engine, args.data_dir / "routes_france.csv", limit=args.trajets_limit)
         with Session(engine) as session:
             n_trajets = session.scalar(select(func.count()).select_from(Trajet))
-        print(f"trajets  : {n_trajets} lignes")
+        logger.info("trajets loaded: %s rows", n_trajets)
 
     if not args.skip_resolve:
         with Session(engine) as session:
@@ -57,18 +64,22 @@ def main() -> None:
                 resolve_trajets(session)
             session.commit()
             stats = resolution_stats(session)
-        print(f"résolu   : clusters.citycode {n_clusters}/{stats['clusters_total']}")
+        logger.info("resolved clusters.citycode: %d/%d", n_clusters, stats["clusters_total"])
         if not args.skip_trajets:
             total = stats["trajets_total"] or 1
-            print(
-                f"           trajets départ {stats['depart_resolus']}/{total} "
-                f"({100 * stats['depart_resolus'] / total:.0f}%), "
-                f"arrivée {stats['arrivee_resolus']}/{total} "
-                f"({100 * stats['arrivee_resolus'] / total:.0f}%)"
+            logger.info(
+                "resolved trajets: départ %d/%d (%.0f%%), arrivée %d/%d (%.0f%%)",
+                stats["depart_resolus"],
+                total,
+                100 * stats["depart_resolus"] / total,
+                stats["arrivee_resolus"],
+                total,
+                100 * stats["arrivee_resolus"] / total,
             )
 
-    refresh_views(engine)  # met à jour les vues matérialisées de la vue d'ensemble
-    print("vues     : rafraîchies")
+    refresh_views(engine)  # met à jour les vues matérialisées
+    logger.info("materialized views refreshed")
+    logger.info("ETL done")
 
 
 if __name__ == "__main__":
