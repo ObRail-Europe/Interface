@@ -24,30 +24,32 @@ fragilité**, via une API REST et un dashboard. Ce dépôt correspond à la phas
 | `dashboard`  | Dash / Plotly (uv)          | 8050  | Interface de consultation et de visualisation   |
 | `prometheus` | Prometheus                  | 9090  | Collecte des métriques de l'API (`/metrics`)    |
 | `loki`       | Grafana Loki                | 3100  | Agrégation des logs applicatifs                 |
-| `promtail`   | Grafana Promtail            | —     | Expédition des logs des conteneurs vers Loki    |
+| `promtail`   | Grafana Promtail            | -     | Expédition des logs des conteneurs vers Loki    |
 | `grafana`    | Grafana                     | 3000  | Tableaux de bord de supervision (métriques+logs)|
 
 ## Démarrage rapide (une seule commande)
 
 ```bash
 cp .env.example .env
-docker compose up --build                    # db + migrations + api + dashboard + monitoring
-docker compose --profile load run --rm load  # (optionnel) ingère les CSV de data/
+docker compose up --build                          # db + schéma + données + api + dashboard + monitoring
+docker compose --profile load run --rm force-load  # réingestion forcée des données (optionnel)
 ```
 
 - API : http://localhost:8000/health · Swagger : http://localhost:8000/docs
 - Dashboard : http://localhost:8050
 - Supervision : http://localhost:3000 (Grafana, accès anonyme) · Prometheus : http://localhost:9090
 
-> Le **schéma est créé automatiquement** au démarrage (service `migrate` → `alembic upgrade head`).
-> Le chargement des données reste explicite (service `load`).
+> Au démarrage, le service `migrate` provisionne le **schéma** (tables + index + vues), puis `load`
+> **ingère les données** (idempotent : ne recharge pas si la base contient déjà des données).
+> Les deux s'appuient sur l'image auto-portante `obrail-database` (cf. § Base de données).
 
 ## Développement local (par service)
 
-Chaque service est un projet Python 3.13 géré par [`uv`](https://docs.astral.sh/uv/).
+Trois projets Python 3.13 indépendants gérés par [`uv`](https://docs.astral.sh/uv/) :
+`database/` (couche base), `api/` (backend, dépend de `database`), `dashboard/` (frontend).
 
 ```bash
-cd api          # ou: cd dashboard
+cd api          # ou: cd database, cd dashboard
 uv sync               # installe les dépendances (crée .venv + uv.lock)
 uv run pytest         # tests (intégration : PostgreSQL requis, cf. § Base de données)
 uv run ruff check     # lint
@@ -56,9 +58,17 @@ uv run uvicorn main:app --reload      # API en local (port 8000)
 # uv run python main.py                # Dashboard en local (port 8050)
 ```
 
-## Base de données (schéma)
+## Base de données - module `database/`
 
-Trois tables PostgreSQL, alimentées par les fichiers de `data/` (modèles SQLAlchemy 2.0 dans `api/models/`) :
+Toute la **gestion de PostgreSQL** (modèles ORM, migrations Alembic, vues matérialisées, ETL
+d'ingestion des CSV) vit dans un **projet uv indépendant** `database/` (package `obrail_database`),
+distinct de l'API qui n'en consomme que les **modèles** via une dépendance path éditable
+(`from obrail_database.models import …`). Le module embarque sa propre **image Docker**
+(`obrail-database`) : tirée et lancée, elle provisionne le schéma (tables + index + vues) et embarque
+les CSV pour le chargement - **auto-portante**, sans dépendre du dépôt.
+
+Trois tables, alimentées par les CSV de `data/` (modèles SQLAlchemy 2.0 dans
+`database/src/obrail_database/models/`) :
 
 | Table | Source (`data/`) | Clé primaire | Contenu |
 | --- | --- | --- | --- |
@@ -69,17 +79,19 @@ Trois tables PostgreSQL, alimentées par les fichiers de `data/` (modèles SQLAl
 **Schéma** : géré par Alembic, appliqué automatiquement dans la stack (service `migrate`). En local :
 
 ```bash
-cd api
-uv run alembic upgrade head          # applique les migrations
-# uv run python init_db.py            # alternative create_all (tests / prototypage)
+cd database
+uv run alembic upgrade head                       # tables + index + vues matérialisées
+# uv run python -m obrail_database.init_db          # alternative create_all (prototypage)
 ```
 
-**Données** : ingestion des CSV + résolution des jointures inter-sources.
+**Données** : ingestion des CSV + résolution des jointures (idempotente : saute si la base contient
+déjà des données).
 
 ```bash
-docker compose --profile load run --rm load   # dans la stack (data/ montée en lecture seule)
-cd api && uv run python -m etl.run            # en local (base lancée)
-#   options : --trajets-limit N · --skip-trajets · --skip-resolve
+docker compose up                                        # le service `load` ingère au 1er démarrage
+docker compose --profile load run --rm force-load        # réingestion forcée (--force)
+cd database && uv run python -m obrail_database.etl.run  # en local (base lancée, CSV dans data/)
+#   options : --trajets-limit N · --skip-trajets · --skip-resolve · --force
 ```
 
 Choix de modélisation :
@@ -99,26 +111,28 @@ Choix de modélisation :
 
 ```
 Interface/
-├── docker-compose.yml      # orchestration db + api + dashboard
+├── docker-compose.yml      # db + migrate/load + api + dashboard + monitoring
 ├── .env.example            # variables d'environnement (modèle)
-├── api/                    # backend FastAPI (couches routers/services/repositories/schemas)
+├── database/               # couche base : projet uv indépendant, image `obrail-database`
+│   ├── Dockerfile          # image qui provisionne le schéma (et embarque les CSV)
+│   ├── alembic.ini
+│   ├── src/obrail_database/
+│   │   ├── models/         # modèles ORM : Base, Ville, Cluster, Trajet
+│   │   ├── migrations/     # Alembic (création des vues matérialisées incluse)
+│   │   ├── etl/            # ingestion CSV + résolution des jointures + vues
+│   │   ├── config.py · engine.py · logging_config.py · testing.py  # plugin pytest partagé
+│   │   └── fixtures/       # CSV seed (tests)
+│   └── tests/              # tests modèles / ETL / vues
+├── api/                    # backend FastAPI (dépend de obrail-database pour les modèles)
 │   ├── main.py             # create_app() : routers + GET /health
-│   ├── routers/            # contrôleurs HTTP
-│   ├── services/           # cas d'usage métier
-│   ├── repositories/       # accès données (Protocol + SQLAlchemy)
-│   ├── schemas/            # DTO Pydantic
-│   ├── dependencies.py     # injection de dépendances
-│   ├── models/             # modèles ORM : Base, Ville, Cluster, Trajet
-│   ├── etl/                # ingestion + résolution des jointures
-│   ├── migrations/         # Alembic
-│   └── tests/
+│   ├── routers/ services/ repositories/ schemas/ ml/   # accès REST en couches
+│   ├── dependencies.py · database.py                    # injection + session SQLAlchemy
+│   └── tests/              # tests endpoints / services
 ├── dashboard/              # frontend Dash (couches api/components/pages)
 │   ├── main.py             # create_app() : onglets + server (gunicorn)
-│   ├── api/                # client de l'API (Protocol + HTTP)
-│   ├── components/         # composants purs (KPI, graphiques)
-│   ├── pages/              # onglets (layout + callbacks)
+│   ├── api/ components/ pages/
 │   └── tests/
-├── data/                   # CSV + modèle .joblib (non versionnés)
+├── data/                   # CSV (gitignorés) + modèles .joblib
 └── .github/workflows/ci.yml
 ```
 
@@ -261,21 +275,21 @@ Question centrale : **le service est-il sain ?**
 
 **Stack monitoring** (lancée par `docker compose up`) : l'API est instrumentée
 (`prometheus-fastapi-instrumentator`) et expose `/metrics` ; **Prometheus** la scrape, **Promtail** ramasse les logs
-des conteneurs vers **Loki**, et **Grafana** (provisionné : datasources + dashboard *ObRail — Supervision*) restitue
+des conteneurs vers **Loki**, et **Grafana** (provisionné : datasources + dashboard *ObRail - Supervision*) restitue
 métriques et logs. L'onglet front embarque ce dashboard Grafana (mode kiosk) sous les badges de santé.
 
 | Service | Port | Rôle |
 | --- | --- | --- |
 | `prometheus` | 9090 | collecte des métriques de l'API |
 | `loki` | 3100 | agrégation des logs |
-| `promtail` | — | expédition des logs des conteneurs vers Loki |
+| `promtail` | - | expédition des logs des conteneurs vers Loki |
 | `grafana` | 3000 | tableaux de bord (métriques + logs), accès anonyme + embedding |
 
 **Politique de logs** : journalisation **structurée JSON** sur stdout (API + dashboard), niveau configurable
 (`LOG_LEVEL`), middleware FastAPI journalisant chaque requête (latence, statut) et **gestion d'erreurs normalisée**
-(`ApiError { detail, code }` + exceptions métier). Aucune écriture de fichier — les logs sont collectés depuis stdout.
+(`ApiError { detail, code }` + exceptions métier). Aucune écriture de fichier - les logs sont collectés depuis stdout.
 
-**Vues & index** : aucune n'est nécessaire — la supervision repose sur des **sondes live** (`SELECT 1`),
+**Vues & index** : aucune n'est nécessaire - la supervision repose sur des **sondes live** (`SELECT 1`),
 l'**instrumentation** Prometheus et l'**agrégation de logs**, pas sur des agrégations de données métier.
 
 ## Qualité & workflow
