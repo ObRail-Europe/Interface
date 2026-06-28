@@ -1,5 +1,6 @@
 """Tests des loaders ETL (cast typé + COPY) sur de petits CSV temporaires."""
 
+import io
 from datetime import date
 from pathlib import Path
 
@@ -47,17 +48,21 @@ def test_load_clusters_casts_float_bool(session: Session, tmp_path: Path) -> Non
 
 
 def test_load_trajets_via_copy(engine: Engine, tmp_path: Path) -> None:
-    csv_file = tmp_path / "trajets.csv"
-    csv_file.write_text(
-        "trip_id,mode,departure_city,arrival_city,is_night_train,distance_km,service_start_date\n"
-        "T1,train,Strasbourg,Berlin,True,789.71,20241215\n",
-        encoding="utf-8",
+    from polars import read_csv
+
+    parquet_file = tmp_path / "trajets.parquet"
+    csv_data = (
+        "trip_id,mode,departure_city,arrival_city,is_night_train,distance_km,service_start_date,service_end_date,days_of_week\n"
+        "T1,train,Strasbourg,Berlin,True,789.71,20241215,20241215,1111111\n"
     )
+    df = read_csv(io.StringIO(csv_data))
+    df.write_parquet(parquet_file)
+
     # COPY écrit hors de la transaction de test → on isole avec un TRUNCATE avant/après.
     with engine.begin() as conn:
         conn.execute(text("TRUNCATE trajets RESTART IDENTITY"))
     try:
-        load_trajets(engine, csv_file)
+        load_trajets(engine, parquet_file)
         with Session(engine) as s:
             t = s.execute(select(Trajet)).scalars().first()
             assert t is not None

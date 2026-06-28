@@ -55,9 +55,9 @@ def _seed(engine: Engine, *, with_flights: bool) -> Session:
         load_villes(setup, FIXTURES / "villes_sample.csv")
         load_clusters(setup, FIXTURES / "clusters_sample.csv")
         setup.commit()
-    load_trajets(engine, FIXTURES / "trajets_sample.csv")
+    load_trajets(engine, FIXTURES / "trajets_sample.parquet")
     if with_flights:
-        load_trajets(engine, FIXTURES / "trajets_flights_sample.csv")
+        load_trajets(engine, FIXTURES / "trajets_flights_sample.parquet")
     with Session(engine) as setup:
         resolve_clusters(setup)
         resolve_trajets(setup)

@@ -66,7 +66,7 @@ def main() -> None:
     if args.skip_trajets:
         logger.info("trajets skipped (--skip-trajets)")
     else:
-        load_trajets(engine, args.data_dir / "routes_france.csv", limit=args.trajets_limit)
+        load_trajets(engine, args.data_dir / "routes_france.parquet", limit=args.trajets_limit)
         with Session(engine) as session:
             n_trajets = session.scalar(select(func.count()).select_from(Trajet))
         logger.info("trajets loaded: %s rows", n_trajets)

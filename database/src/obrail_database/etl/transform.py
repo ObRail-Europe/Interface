@@ -7,6 +7,15 @@ format `3.0`, dates GTFS `YYYYMMDD`, champs vides → `None`.
 from datetime import date, datetime
 from typing import Any
 
+from polars import (
+    DataFrame as plDataFrame,
+)
+from polars import (
+    String as plString,
+)
+from polars import (
+    col as plCol,
+)
 from sqlalchemy import Boolean, Date, Float, Integer
 from sqlalchemy.types import TypeEngine
 
@@ -42,3 +51,15 @@ def row_to_mapping(row: dict[str, str], model: type) -> dict[str, Any]:
         for col in model.__table__.columns
         if col.name in row
     }
+
+
+def prepare_trajet_types(df: plDataFrame) -> plDataFrame:
+    return df.with_columns(
+        [
+            # Force la lecture en String, puis parse la date au format YYYYMMDD
+            plCol("service_start_date").cast(plString).str.to_date("%Y%m%d", strict=False),
+            plCol("service_end_date").cast(plString).str.to_date("%Y%m%d", strict=False),
+            plCol("is_night_train").cast(plString).str.to_lowercase() == "true",
+            plCol("days_of_week").cast(plString).str.replace_all("\x00", ""),
+        ]
+    )

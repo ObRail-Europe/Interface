@@ -1,7 +1,0 @@
-source,trip_id,mode,agency_name,departure_city,departure_country,arrival_city,arrival_country,departure_time,arrival_time,service_start_date,service_end_date,days_of_week,is_night_train,distance_km,co2_per_pkm,emissions_co2
-AF,AF7600,flight,Air France,Paris,FR,Nice,FR,08:00:00,09:25:00,20250101,20251213,,False,690.0,250.0,172500.0
-AF,AF7602,flight,Air France,Paris,FR,Toulouse,FR,10:00:00,11:15:00,20250101,20251213,,False,590.0,255.0,150450.0
-AF,AF7610,flight,Air France,Paris,FR,Marseille,FR,12:00:00,13:20:00,20250101,20251213,,False,660.0,252.0,166320.0
-U2,U23310,flight,easyJet,Lyon,FR,Lille,FR,07:30:00,08:45:00,20250101,20251213,,False,690.0,300.0,207000.0
-U2,U23312,flight,easyJet,Bordeaux,FR,Strasbourg,FR,18:00:00,19:20:00,20250101,20251213,,False,730.0,310.0,226300.0
-AF,AF1234,flight,Air France,Paris,FR,Berlin,DE,06:00:00,07:50:00,20250101,20251213,,False,880.0,200.0,176000.0
