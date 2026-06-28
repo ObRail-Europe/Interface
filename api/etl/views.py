@@ -27,7 +27,7 @@ def _completude_block(table_name: str, model: type) -> str:
     """Bloc SQL comptant les NULLs de chaque colonne d'une table (un seul scan).
 
     Compte tous les NULLs en une passe, puis dé-pivote en lignes (colonne, nb_nuls)
-    via `VALUES` — bien plus efficace qu'un scan par colonne sur ~13M trajets.
+    via `VALUES` - bien plus efficace qu'un scan par colonne sur ~13M trajets.
     """
     cols = [c.name for c in model.__table__.columns]
     null_counts = ", ".join(f"count(*) FILTER (WHERE {c} IS NULL) AS n_{c}" for c in cols)
