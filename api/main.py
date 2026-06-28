@@ -11,7 +11,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from config import settings
 from exceptions import ObRailError
 from logging_config import configure_logging
-from routers import carbone, clusters, qualite, stats, territoires, trajets
+from routers import carbone, clusters, qualite, stats, supervision, territoires, trajets
 
 logger = logging.getLogger("obrail.api")
 _request_logger = logging.getLogger("obrail.request")
@@ -79,6 +79,7 @@ def create_app() -> FastAPI:
     app.include_router(territoires.router)
     app.include_router(clusters.router)
     app.include_router(qualite.router)
+    app.include_router(supervision.router)
 
     @app.get("/health", tags=["infra"])
     def health() -> dict[str, str]:
