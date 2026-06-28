@@ -4,10 +4,10 @@ Lectures directes de la table `clusters` (~10k lignes, déjà indexée sur `clus
 `niveau_fragilite`, `citycode`) : aucune vue matérialisée nécessaire.
 """
 
+from obrail_database.models import Cluster, Ville
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from models import Cluster, Ville
 from repositories.interfaces import (
     ClusterGeoAggregate,
     ClusterProfilAggregate,

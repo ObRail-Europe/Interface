@@ -2,7 +2,7 @@
 .venv/
 venv/
 
-data/
+data/*.csv
 logs/
 artifacts/
 

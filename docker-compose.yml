@@ -26,10 +26,13 @@ services:
         limits:
           memory: 16G
 
-  # Applique les migrations Alembic puis se termine (le schéma est prêt avant l'API).
+  # Provisionne le schéma (tables, index, vues) via Alembic puis se termine.
+  # Image auto-portante : embarque aussi les CSV (utilisés par le service load).
   migrate:
-    image: obrail-api
-    build: ./api
+    image: obrail-database
+    build:
+      context: .
+      dockerfile: database/Dockerfile
     command: ["alembic", "upgrade", "head"]
     environment:
       DATABASE_URL: *db-url
@@ -38,8 +41,23 @@ services:
         condition: service_healthy
     restart: "no"
 
+  # Ingestion des CSV embarqués dans l'image (idempotente : saute si la base n'est pas vide).
+  load:
+    image: obrail-database
+    command: ["python", "-m", "obrail_database.etl.run", "--data-dir", "/app/data"]
+    environment:
+      DATABASE_URL: *db-url
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: "no"
+
   api:
     image: obrail-api
+    # Contexte racine : l'image api embarque le module database (dépendance path).
+    build:
+      context: .
+      dockerfile: api/Dockerfile
     environment:
       DATABASE_URL: *db-url
       MODEL_DIR: /data # modèles .joblib
@@ -52,6 +70,8 @@ services:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
+      load:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').status==200 else 1)\""]
       interval: 10s
@@ -62,7 +82,7 @@ services:
     build: ./dashboard
     environment:
       API_URL: http://api:8000
-      GRAFANA_URL: ${GRAFANA_URL:-http://localhost:3000} # panneaux Grafana embarqués (V9.2/V9.3)
+      GRAFANA_URL: ${GRAFANA_URL:-http://localhost:3000} # panneaux Grafana embarqués
     ports:
       - "8050:8050"
     depends_on:
@@ -113,16 +133,14 @@ services:
       - prometheus
       - loki
 
-  # Ingestion des CSV (data/ monté en lecture seule). Profil `load` : non lancé par défaut.
-  #   docker compose --profile load run --rm load
-  load:
-    image: obrail-api
+  # Réingestion forcée des CSV embarqués (écrase les données existantes).
+  #   docker compose --profile load run --rm force-load
+  force-load:
+    image: obrail-database
     profiles: ["load"]
-    command: ["python", "-m", "etl.run", "--data-dir", "/data"]
+    command: ["python", "-m", "obrail_database.etl.run", "--data-dir", "/app/data", "--force"]
     environment:
       DATABASE_URL: *db-url
-    volumes:
-      - ./data:/data:ro
     depends_on:
       migrate:
         condition: service_completed_successfully

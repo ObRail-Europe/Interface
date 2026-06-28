@@ -22,17 +22,3 @@ def get_db() -> Generator[Session]:
         yield db
     finally:
         db.close()
-
-
-def init_db() -> None:
-    """Crée toutes les tables ORM dans la base."""
-    from models import Base  # import local et évite un cycle
-
-    Base.metadata.create_all(bind=engine)
-
-
-def drop_db() -> None:
-    """Supprime toutes les tables ORM."""
-    from models import Base
-
-    Base.metadata.drop_all(bind=engine)
