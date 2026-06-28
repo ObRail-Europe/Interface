@@ -1,4 +1,4 @@
-"""Client de l'API ObRail — onglet « Fragilité territoriale ».
+"""Client de l'API ObRail - onglet « Fragilité territoriale ».
 
 `ClusterClient` est l'abstraction dont dépend la page ; `HttpClusterClient`
 en est l'implémentation HTTP. Les tests injectent une doublure.

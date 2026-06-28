@@ -26,7 +26,7 @@ def layout() -> html.Div:
             html.H3("Métriques & journal applicatif (Grafana)"),
             html.P(
                 children=[
-                    "Disponibilité, latence, taux d'erreurs et logs en temps réel — ",
+                    "Disponibilité, latence, taux d'erreurs et logs en temps réel - ",
                     html.A("ouvrir dans Grafana", href=_GRAFANA_EMBED, target="_blank"),
                     ".",
                 ],

@@ -4,7 +4,7 @@ from typing import Any
 
 from dash import dcc, html
 
-# (id, libellé, valeur par défaut, pas) — entrées brutes du modèle live.
+# (id, libellé, valeur par défaut, pas) - entrées brutes du modèle live.
 SIMULATOR_FIELDS = [
     ("sim-population", "Population", 20000, 100),
     ("sim-densite_pop_km2", "Densité (hab/km²)", 500, 10),
@@ -72,7 +72,7 @@ def prediction_result(prediction: dict[str, Any]) -> html.Div:
     return html.Div(
         className="detail",
         children=[
-            html.H4(f"Cluster {prediction['cluster']} — {prediction.get('cluster_nom') or ''}"),
+            html.H4(f"Cluster {prediction['cluster']} - {prediction.get('cluster_nom') or ''}"),
             html.Dl(
                 [
                     html.Div(

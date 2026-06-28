@@ -6,7 +6,7 @@ from schemas.liaison import GeoPoint
 
 
 class VilleGeoPoint(BaseModel):
-    """V6.1 — commune géolocalisée et la valeur de la dimension cartographiée."""
+    """V6.1 - commune géolocalisée et la valeur de la dimension cartographiée."""
 
     citycode: str
     city_name: str
@@ -27,7 +27,7 @@ class CouvertureMaille(BaseModel):
 
 
 class Couverture(BaseModel):
-    """V6.2 — couverture ferroviaire par maille territoriale."""
+    """V6.2 - couverture ferroviaire par maille territoriale."""
 
     by: str  # "code_dept" | "code_region"
     mailles: list[CouvertureMaille]
@@ -42,7 +42,7 @@ class AmplitudeBin(BaseModel):
 
 
 class AmplitudeDistribution(BaseModel):
-    """V6.4 — distribution de l'amplitude de service + part desservie après minuit."""
+    """V6.4 - distribution de l'amplitude de service + part desservie après minuit."""
 
     bin_h: float
     part_apres_minuit: float  # 0..1

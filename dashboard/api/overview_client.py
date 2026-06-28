@@ -1,4 +1,4 @@
-"""Client de l'API ObRail — onglet « Vue d'ensemble ».
+"""Client de l'API ObRail - onglet « Vue d'ensemble ».
 
 `OverviewClient` est l'abstraction dont dépend la page ; `HttpOverviewClient`
 en est l'implémentation HTTP. Les tests injectent une doublure.

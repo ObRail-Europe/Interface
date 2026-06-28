@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     api_title: str = "ObRail API"
     api_version: str = "0.0.0"
 
-    # Niveau de log (DEBUG, INFO, WARNING, ERROR) — politique de logs (supervision V9).
+    # Niveau de log (DEBUG, INFO, WARNING, ERROR) - politique de logs (supervision V9).
     log_level: str = "INFO"
 
     model_dir: str = _DEFAULT_MODEL_DIR

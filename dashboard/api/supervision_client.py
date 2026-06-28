@@ -1,4 +1,4 @@
-"""Client de l'API ObRail — onglet « Supervision » (V9.1)."""
+"""Client de l'API ObRail - onglet « Supervision » (V9.1)."""
 
 from typing import Any, Protocol
 

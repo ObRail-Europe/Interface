@@ -75,8 +75,8 @@ def trajet_detail(detail: dict[str, Any]) -> html.Div:
     fields = [
         ("Opérateur", detail.get("agency_name")),
         ("Ligne", detail.get("route_long_name") or detail.get("route_short_name")),
-        ("Départ", f"{dep} — {detail.get('departure_time')}"),
-        ("Arrivée", f"{arr} — {detail.get('arrival_time')}"),
+        ("Départ", f"{dep} - {detail.get('departure_time')}"),
+        ("Arrivée", f"{arr} - {detail.get('arrival_time')}"),
         ("Distance", f"{detail.get('distance_km')} km"),
         ("Nuit", "Oui" if detail.get("is_night_train") else "Non"),
         ("CO₂ / pkm", detail.get("co2_per_pkm")),

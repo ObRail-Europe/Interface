@@ -12,6 +12,6 @@ class ServiceHealth(BaseModel):
 
 
 class HealthDetails(BaseModel):
-    """V9.1 — état de santé détaillé des services."""
+    """V9.1 - état de santé détaillé des services."""
 
     services: list[ServiceHealth]

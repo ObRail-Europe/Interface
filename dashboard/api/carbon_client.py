@@ -1,4 +1,4 @@
-"""Client de l'API ObRail — onglet « Empreinte carbone ».
+"""Client de l'API ObRail - onglet « Empreinte carbone ».
 
 `CarbonClient` est l'abstraction dont dépend la page ; `HttpCarbonClient`
 en est l'implémentation HTTP. Les tests injectent une doublure.

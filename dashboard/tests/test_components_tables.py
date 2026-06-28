@@ -27,7 +27,7 @@ _DETAIL = {
     "trip_id": "T7",
     "mode": "train",
     "agency_name": "SNCF",
-    "route_long_name": "Paris — Lyon",
+    "route_long_name": "Paris - Lyon",
     "route_short_name": None,
     "departure_station": None,
     "departure_city": "Paris",
