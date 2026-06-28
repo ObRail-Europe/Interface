@@ -2,12 +2,13 @@
 .venv/
 venv/
 
-data/*.csv
+
 logs/
 artifacts/
 
 pycache/
 __pycache__/
+.coverage
 
 .vscode/
 

@@ -4,8 +4,9 @@ Solution applicative conteneurisée pour **ObRail Europe**, observatoire du ferr
 bas-carbone. Elle expose les données de **trajets** ferroviaires, de **villes** et un modèle de **clustering de
 fragilité**, via une API REST et un dashboard. Ce dépôt correspond à la phase d'**industrialisation** du prototype.
 
-> **État actuel** : socle MVP conteneurisé (API + dashboard) et **schéma de données** PostgreSQL (3 tables).
-> Endpoints métier et ingestion ETL des données à venir.
+> **État actuel** : plateforme conteneurisée complète - couche base (`database/`, image auto-portante),
+> API REST FastAPI, dashboard Dash (9 onglets : vue d'ensemble, explorateur, carbone, territoires,
+> fragilité + modèle live, qualité, supervision) et stack de supervision Prometheus / Loki / Grafana.
 
 ## Architecture
 
@@ -30,6 +31,7 @@ fragilité**, via une API REST et un dashboard. Ce dépôt correspond à la phas
 ## Démarrage rapide (une seule commande)
 
 ```bash
+git lfs install && git lfs pull   # récupère routes_france.parquet (~630 Mo, Git LFS)
 cp .env.example .env
 docker compose up --build                          # db + schéma + données + api + dashboard + monitoring
 docker compose --profile load run --rm force-load  # réingestion forcée des données (optionnel)
@@ -63,18 +65,23 @@ uv run uvicorn main:app --reload      # API en local (port 8000)
 Toute la **gestion de PostgreSQL** (modèles ORM, migrations Alembic, vues matérialisées, ETL
 d'ingestion des CSV) vit dans un **projet uv indépendant** `database/` (package `obrail_database`),
 distinct de l'API qui n'en consomme que les **modèles** via une dépendance path éditable
-(`from obrail_database.models import …`). Le module embarque sa propre **image Docker**
-(`obrail-database`) : tirée et lancée, elle provisionne le schéma (tables + index + vues) et embarque
-les CSV pour le chargement - **auto-portante**, sans dépendre du dépôt.
+(`from obrail_database.models import …`). Le module embarque sa propre **image Docker** `obrail-database`,
+**publiée sur GitHub Container Registry** (`ghcr.io/<owner>/obrail-database`, cf. CD) : tirée et lancée,
+elle provisionne le schéma (tables + index + vues) et embarque les données pour le chargement -
+**auto-portante**, sans dépendre du dépôt.
 
-Trois tables, alimentées par les CSV de `data/` (modèles SQLAlchemy 2.0 dans
+Trois tables, alimentées par les fichiers de `data/` (modèles SQLAlchemy 2.0 dans
 `database/src/obrail_database/models/`) :
 
 | Table | Source (`data/`) | Clé primaire | Contenu |
 | --- | --- | --- | --- |
 | `villes` | `villes_enriched.csv` (~10k) | `citycode` (INSEE) | desserte + indicateurs socio-éco par commune |
 | `clusters` | `clusters_final.csv` (~10k) | `row_id` | cluster de fragilité + features (modèle `cluster_fragilite.joblib`) |
-| `trajets` | `routes_france.csv` (~13M) | `id` (surrogate) | trajets ferroviaires : horaires, géo, calendrier, CO₂ |
+| `trajets` | `routes_france.parquet` (~13M, **Git LFS**) | `id` (surrogate) | trajets ferroviaires : horaires, géo, calendrier, CO₂ |
+
+> Les données sont **versionnées** : les CSV (villes, clusters) et les `.joblib` directement, le gros
+> `routes_france.parquet` (~630 Mo) via **Git LFS** (`git lfs install` puis `git clone`/`git lfs pull`).
+> L'ETL lit le Parquet avec **Polars** (chargement en masse par `COPY`).
 
 **Schéma** : géré par Alembic, appliqué automatiquement dans la stack (service `migrate`). En local :
 
@@ -90,7 +97,7 @@ déjà des données).
 ```bash
 docker compose up                                        # le service `load` ingère au 1er démarrage
 docker compose --profile load run --rm force-load        # réingestion forcée (--force)
-cd database && uv run python -m obrail_database.etl.run  # en local (base lancée, CSV dans data/)
+cd database && uv run python -m obrail_database.etl.run  # en local (base lancée, données dans data/)
 #   options : --trajets-limit N · --skip-trajets · --skip-resolve · --force
 ```
 
@@ -132,8 +139,9 @@ Interface/
 │   ├── main.py             # create_app() : onglets + server (gunicorn)
 │   ├── api/ components/ pages/
 │   └── tests/
-├── data/                   # CSV (gitignorés) + modèles .joblib
-└── .github/workflows/ci.yml
+├── data/                   # CSV + Parquet (trajets, via Git LFS) + modèles .joblib (versionnés)
+├── .gitattributes          # *.parquet → Git LFS
+└── .github/workflows/      # ci.yml (lint, tests, build) + cd.yml (publication ghcr.io)
 ```
 
 ## Architecture applicative (clean architecture)
@@ -294,7 +302,11 @@ l'**instrumentation** Prometheus et l'**agrégation de logs**, pas sur des agré
 
 ## Qualité & workflow
 
-- **CI** : GitHub Actions (`.github/workflows/ci.yml`) - lint, tests, build des images Docker.
+- **CI** (`.github/workflows/ci.yml`) : lint, tests **par projet** (`database`, `api`, `dashboard`) avec
+  PostgreSQL, **gate de couverture 70 %**, build des images Docker (checkout `lfs: true` pour le Parquet).
+- **CD** (`.github/workflows/cd.yml`) : build & **publication des images sur GitHub Container Registry**
+  (`ghcr.io`) sur `main` - l'image `obrail-database` est ainsi **pullable** et déployable seule.
+- **Données** : versionnées (CSV/`.joblib` en clair, `routes_france.parquet` via **Git LFS**).
 - **Lint/format** : `ruff` (config par service). **Hooks** : `pre-commit` (`.pre-commit-config.yaml`).
 - **Branches** : GitHub Flow - `feat/…`, `fix/…` → PR → CI verte → revue → merge sur `main`.
 - **Commits** : [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `ci:`, `docs:`…).

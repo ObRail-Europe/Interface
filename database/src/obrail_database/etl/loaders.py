@@ -8,11 +8,12 @@
 import csv
 from pathlib import Path
 
+import polars as pl
 from sqlalchemy import func, insert, select, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
-from obrail_database.etl.transform import row_to_mapping
+from obrail_database.etl.transform import prepare_trajet_types, row_to_mapping
 from obrail_database.models import Cluster, Trajet, Ville
 
 
@@ -34,31 +35,28 @@ def load_clusters(session: Session, csv_path: Path) -> int:
     return _load_csv_orm(session, Cluster, csv_path)
 
 
-def load_trajets(engine: Engine, csv_path: Path, limit: int | None = None) -> None:
-    """Charge `routes_france.csv` dans `trajets` via `COPY` (limit = nb de lignes max)."""
-    with open(csv_path, encoding="utf-8") as f:
-        header = f.readline().strip()
-    cols = [c.strip() for c in header.split(",")]
+def load_trajets(engine: Engine, parquet_path: Path, limit: int | None = None) -> None:
+    """Charge `routes_france.parquet` dans `trajets` via `COPY` (limit = nb de lignes max)."""
+    schema = pl.read_parquet_schema(parquet_path)
+    cols = list(schema.keys())
+
     unknown = [c for c in cols if c not in Trajet.__table__.columns]
     if unknown:
-        raise ValueError(f"Colonnes inconnues dans {csv_path.name} : {unknown}")
+        raise ValueError(f"Colonnes inconnues dans {parquet_path.name} : {unknown}")
 
-    copy_sql = f"COPY trajets ({', '.join(cols)}) FROM STDIN WITH (FORMAT csv, HEADER true)"
-    raw = engine.raw_connection()
-    try:
-        dbapi = raw.driver_connection
-        with dbapi.cursor() as cur, cur.copy(copy_sql) as copy, open(csv_path, "rb") as fb:
-            if limit is None:
-                while chunk := fb.read(1 << 20):
-                    copy.write(chunk)
-            else:
-                for i, line in enumerate(fb):  # i == 0 : ligne d'en-tête
-                    copy.write(line)
-                    if i >= limit:
-                        break
-        dbapi.commit()
-    finally:
-        raw.close()
+    if limit:
+        df = pl.scan_parquet(parquet_path).head(limit).collect()
+    else:
+        df = pl.read_parquet(parquet_path)
+
+    df = prepare_trajet_types(df)
+
+    connection_uri = engine.url.render_as_string(hide_password=False)
+    connection_uri = connection_uri.replace("postgresql+psycopg://", "postgresql://")
+
+    df.write_database(
+        table_name="trajets", connection=connection_uri, if_table_exists="append", engine="adbc"
+    )
 
 
 def truncate_all(session: Session) -> None:

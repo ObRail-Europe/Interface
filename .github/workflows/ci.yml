@@ -7,7 +7,7 @@ on:
 
 # Annule les exécutions précédentes d'une même branche/PR encore en cours.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -22,14 +22,19 @@ jobs:
       run:
         working-directory: ${{ matrix.service }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up UV
+        uses: astral-sh/setup-uv@v5
         with:
           python-version: "3.13"
           enable-cache: true
-      - run: uv sync --frozen
-      - run: uv run ruff check
-      - run: uv run ruff format --check
+      - name: Sync dependencies
+        run: uv sync --frozen
+      - name: Run ruff check
+        run: uv run ruff check
+      - name: Run ruff format
+        run: uv run ruff format --check
 
   test-database:
     name: Tests Database (+ PostgreSQL)
@@ -54,18 +59,23 @@ jobs:
       run:
         working-directory: database
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+      - name: Set up UV
+        uses: astral-sh/setup-uv@v5
         with:
           python-version: "3.13"
           enable-cache: true
-      - run: uv sync --frozen
-      - run: uv run pytest -q
+      - name: Sync dependencies
+        run: uv sync --frozen
+      - name: Run tests
+        run: uv run pytest -q
 
   test-api:
     name: Tests API (+ PostgreSQL)
     runs-on: ubuntu-latest
-    # Service Postgres pour les tests d'intégration backend / base de données.
     services:
       postgres:
         image: postgres:16
@@ -86,14 +96,19 @@ jobs:
       run:
         working-directory: api
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+      - name: Set up UV
+        uses: astral-sh/setup-uv@v5
         with:
           python-version: "3.13"
           enable-cache: true
-      # Résout la dépendance path obrail-database (../database présent au checkout).
-      - run: uv sync --frozen
-      - run: uv run pytest -q
+      - name: Sync dependencies
+        run: uv sync --frozen
+      - name: Run tests
+        run: uv run pytest -q
 
   test-dashboard:
     name: Tests Dashboard
@@ -102,23 +117,30 @@ jobs:
       run:
         working-directory: dashboard
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up UV
+        uses: astral-sh/setup-uv@v5
         with:
           python-version: "3.13"
           enable-cache: true
-      - run: uv sync --frozen
-      - run: uv run pytest -q
+      - name: Sync dependencies
+        run: uv sync --frozen
+      - name: Run tests
+        run: uv run pytest -q
 
-  build:
-    name: Build image Docker - ${{ matrix.service }}
+  build-test:
+    name: Test Build Docker - ${{ matrix.service }}
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
     needs: [lint, test-database, test-api, test-dashboard]
     strategy:
       fail-fast: false
       matrix:
-        # L'api se build depuis la racine (dépendance path vers database).
         include:
+          - service: database
+            context: .
+            dockerfile: ./database/Dockerfile
           - service: api
             context: .
             dockerfile: ./api/Dockerfile
@@ -126,14 +148,21 @@ jobs:
             context: ./dashboard
             dockerfile: ./dashboard/Dockerfile
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - name: Build ${{ matrix.service }}
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image (Dry Run)
         uses: docker/build-push-action@v6
         with:
           context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile }}
           push: false
-          tags: obrail-${{ matrix.service }}:ci
+          platforms: linux/amd64
+          tags: obrail-${{ matrix.service }}:pr-test
           cache-from: type=gha
-          cache-to: type=gha,mode=max
