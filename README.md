@@ -207,6 +207,27 @@ agrégations (par maille, histogramme) sont donc directes et triviales. Les colo
 `code_region`, `has_gare`) sont **déjà indexées** au schéma - pas d'index superflu. (Une vue matérialisée se
 justifie pour agréger les ~13M trajets, pas pour 10k communes.)
 
+## Onglet « Fragilité territoriale » (V7)
+
+Question centrale : **quels territoires sont fragiles ? (modèle de clustering)**
+
+| Viz | Endpoint API | Visualisation |
+| --- | --- | --- |
+| V7.1 Carte des clusters | `GET /api/v1/clusters/carte` (`code_dept`, `code_region`, `has_gare`) | communes colorées par cluster (palette daltonisme-safe) |
+| V7.4 Effectifs des clusters | `GET /api/v1/clusters` | barres horizontales des effectifs par cluster |
+| V7.2 Profils des clusters | `GET /api/v1/clusters/profils` | coordonnées parallèles des features normalisées 0–1 |
+| V7.3 Fragilité par maille | `GET /api/v1/stats/fragilite?by=code_region\|code_dept` | barres empilées par territoire, échelle de fragilité vert→rouge |
+| V7.5 Simulateur (modèle live) | `POST /api/v1/fragilite/predict` | formulaire → cluster + niveau prédits |
+
+**Vues & index** : comme l'onglet Territoires, la source est la table **`clusters` (~10k communes)**, déjà indexée
+(`cluster`, `niveau_fragilite`, `citycode`) ; lectures/agrégations directes, **pas de vue matérialisée**.
+
+**Modèle live (V7.5)** : le simulateur charge `cluster_fragilite.joblib` (KMeans **stratifié par `has_gare`**) +
+`preprocessing.joblib` (imputation médiane, dérivation `dist_gare_corrected` / `stress_mobilite`, winsorisation IQR,
+`log1p`), puis affecte au **centroïde le plus proche**. Inférence **numpy pure** (sans scikit-learn) ; reproduction
+de la partition d'origine validée à **~99,98 %**. Les `.joblib` sont lus depuis `MODEL_DIR` (volume `./data` monté en
+lecture seule ; `503` propre si absents).
+
 ## Qualité & workflow
 
 - **CI** : GitHub Actions (`.github/workflows/ci.yml`) - lint, tests, build des images Docker.
@@ -220,11 +241,13 @@ justifie pour agréger les ~13M trajets, pas pour 10k communes.)
 **Réalisé** : socle conteneurisé, schéma + ETL (ingestion & résolution des jointures),
 **onglet Vue d'ensemble** (KPI, jour/nuit, opérateurs, départs), **onglet Explorateur de
 trajets** (liaisons, table, histogramme, détail), **onglet Empreinte carbone**
-(CO₂ évité vs avion, densité distance × intensité, distribution par mode) et
-**onglet Territoires & couverture** (carte des communes, couverture par maille, amplitude de service).
+(CO₂ évité vs avion, densité distance × intensité, distribution par mode),
+**onglet Territoires & couverture** (carte des communes, couverture par maille, amplitude de service)
+et **onglet Fragilité territoriale** (carte des clusters, effectifs, profils, répartition par maille,
+simulateur live).
 
 **À venir** :
 
 - **Onglets** : Jour/Nuit (détaillé), Opérateurs,
-  Fragilité/Clusters, Qualité des données, Supervision.
+  Qualité des données, Supervision.
 - **Monitoring** : Prometheus + Grafana. **Tests E2E** : Playwright.
