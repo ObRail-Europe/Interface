@@ -8,7 +8,7 @@
 import csv
 from pathlib import Path
 
-from sqlalchemy import insert, text
+from sqlalchemy import func, insert, select, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
@@ -64,3 +64,12 @@ def load_trajets(engine: Engine, csv_path: Path, limit: int | None = None) -> No
 def truncate_all(session: Session) -> None:
     """Vide les 3 tables (réinitialise les identités) avant un rechargement complet."""
     session.execute(text("TRUNCATE villes, clusters, trajets RESTART IDENTITY CASCADE"))
+
+
+def is_database_empty(session: Session) -> bool:
+    """Vérifie si la base est vide (aucune ligne dans les 3 tables)."""
+    for model in (Ville, Cluster, Trajet):
+        count = session.scalar(select(func.count()).select_from(model))
+        if count:
+            return False
+    return True
